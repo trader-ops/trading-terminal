@@ -453,7 +453,7 @@ let ASSETS = {
         currentPrice: 4.78,
         direction: "UP",
         changePct: "+0.46%",
-        tvSymbol: "TVC:US10Y",
+        tvSymbol: "US10Y",
         volatility: 0.008,
         confidence: "93%",
         driver: "Live CBOE ^TNX yield at 4.784%. Applying direct yield pressure on Gold."
