@@ -1,3 +1,5 @@
+var SOUND_ENABLED = typeof localStorage !== "undefined" ? localStorage.getItem("terminal_sound_enabled") !== "false" : true;
+var _prevCockpitPrice = 4357.31;
 
 // 100% COMPLETE SMC (HH/HL vs LH/LL, BOS, CHoCH, OB & FVG) DYNAMIC ENGINE
 let CURRENT_SMC_STATE = "BEARISH_LH_LL";
@@ -613,8 +615,10 @@ function initDirectBrowserTradingViewWs() {
 
 // REAL-TIME 0-LATENCY SSE STREAM CONNECTOR
 let sseConnection = null;
+let sseRetryCount = 0;
 function init0LatencyMarketStream() {
     try {
+        if (sseRetryCount >= 2) return;
         if (sseConnection) {
             try { sseConnection.close(); } catch(e) {}
         }
@@ -650,8 +654,11 @@ function init0LatencyMarketStream() {
             } catch(e) {}
         };
         sseConnection.onerror = () => {
+            sseRetryCount++;
             try { sseConnection.close(); } catch(e) {}
-            setTimeout(init0LatencyMarketStream, 2000);
+            if (sseRetryCount < 2) {
+                setTimeout(init0LatencyMarketStream, 5000);
+            }
         };
     } catch(e) {}
 }
@@ -6663,6 +6670,7 @@ function renderUnifiedPerformanceJournal() {
         const distPips = Math.abs(Math.round((cp - activePipeTrade.entryPrice) * 10));
         activeTradeSub.innerHTML = `Entry Level: $${activePipeTrade.entryPrice.toFixed(2)} • Sniper SL: $${activePipeTrade.slPrice.toFixed(2)} • Live Spot: $${cp.toFixed(2)} • Session: ${activePipeTrade.session}`;
     }
+    const activeTradeStatusPill = document.getElementById("activeTradeStatusPill");
     if (activeTradeStatusPill) {
         activeTradeStatusPill.innerHTML = `👑 ${won.length} WINS LOCKED • ${lost.length} LOSS (${winRate}% WIN RATE) • PIPELINE AUTO-DETECT ACTIVE`;
     }
