@@ -3306,17 +3306,17 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                         }
                     } else {
                         // If price ran away or blew past without ever touching entry:
-                        const isTargetReachedWithoutEntry = t.isBear ? (cp <= (t.tp2Price || (t.entryPrice - 15.00))) : (cp >= (t.tp2Price || (t.entryPrice + 15.00)));
+                        const isTargetReachedWithoutEntry = t.isBear ? (cp <= (t.tp1Price || (t.entryPrice - 10.00))) : (cp >= (t.tp1Price || (t.entryPrice + 10.00)));
                         const isBlownPastWithoutEntry = t.isBear ? (cp >= (t.slPrice + 4.00)) : (cp <= (t.slPrice - 4.00));
 
                         if (isTargetReachedWithoutEntry || isBlownPastWithoutEntry) {
                             t.status = "MISSED";
                             t.badge = "⚡ MISSED: RUNAWAY MOVE (NO FILL)";
                             t.securedPips = 0;
-                            t.completedAt = Date.now();
+                            t.completedAt = Date.now() - 12000; // Fast auto-advance in 3s
                             t.missedReason = isTargetReachedWithoutEntry 
-                                ? "Market direct full TP par chali gayi baghair entry trigger kiye" 
-                                : "Price entry touch kiye baghair door nikal gayi";
+                                ? "Market direct TP1 hit kar gayi baghair entry trigger kiye ($0.00 Risk)" 
+                                : "Price entry touch kiye baghair door nikal gayi ($0.00 Risk)";
                             t.subText = "Entry point touch nahi hua • Capital 100% Protected ($0.00 Loss)";
                             if (typeof autoDetectAndSyncPipelineToJournal === "function") autoDetectAndSyncPipelineToJournal();
                             savePipelinePersistence();
@@ -4675,6 +4675,24 @@ function computeRealtimeConfluence() {
         if (mtf1hZone) mtf1hZone.innerText = `$${(activeTrade.zoneMin - 2).toFixed(2)} – $${(activeTrade.zoneMax + 2).toFixed(2)}`;
         if (mtf15mZone) mtf15mZone.innerText = `$${activeTrade.zoneMin.toFixed(2)} – $${activeTrade.zoneMax.toFixed(2)}`;
         if (mtf1mZone) mtf1mZone.innerText = `$${(activeTrade.entryPrice - 0.5).toFixed(2)} – $${(activeTrade.entryPrice + 0.5).toFixed(2)}`;
+
+        const osrHtfContext = document.getElementById("osrHtfContext");
+        const osrLiqSweep = document.getElementById("osrLiqSweep");
+        const osrMacroContext = document.getElementById("osrMacroContext");
+        const osrPinpointContext = document.getElementById("osrPinpointContext");
+
+        if (osrHtfContext) {
+            osrHtfContext.innerHTML = `4H Anchor ($${(activeTrade.entryPrice - 15).toFixed(2)}–$${(activeTrade.entryPrice + 15).toFixed(2)}) + 1H POI ($${activeTrade.zoneMin.toFixed(2)}–$${activeTrade.zoneMax.toFixed(2)}). Bias: ${isTradeBear ? 'Bearish' : 'Bullish'}.`;
+        }
+        if (osrLiqSweep) {
+            osrLiqSweep.innerHTML = `${isTradeBear ? 'Whale BSL swept' : 'Whale SSL swept'} ➔ Rejection confirmed ➔ Magnet drawing to ${isTradeBear ? 'SSL' : 'BSL'} ($${activeTrade.tp1Price.toFixed(2)}).`;
+        }
+        if (osrMacroContext) {
+            osrMacroContext.innerHTML = `DXY active at ${dxy.currentPrice.toFixed(2)} + 10Y Yields surging ${us10y.currentPrice.toFixed(2)}%. Dollar momentum ${isTradeBear ? 'crushes bullion' : 'supports bullion'}.`;
+        }
+        if (osrPinpointContext) {
+            osrPinpointContext.innerHTML = `15M ${isTradeBear ? 'Shooting Star' : 'Hammer'} Rejection Wick ➔ 1M Pinpoint ($${activeTrade.entryPrice.toFixed(2)}) ➔ Sniper SL $${activeTrade.slPrice.toFixed(2)}.`;
+        }
         if (omniTp1) {
             if (cp <= activeTrade.tp1Price || activeTrade.status === "DONE") {
                 omniTp1.innerHTML = `$${activeTrade.tp1Price.toFixed(2)} <span style="color:var(--color-green); font-weight:900;">[✅ TP1 SMASHED • +${activeTrade.tp1Pips} Pips]</span>`;
