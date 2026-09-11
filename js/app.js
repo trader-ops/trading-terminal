@@ -3268,7 +3268,289 @@ function computeLiveObstacleAndActionAdvice(activeTrade, cp) {
         };
     }
 }
-window.computeLiveObstacleAndActionAdvice = computeLiveObstacleAndActionAdvice;
+// =========================================================================
+// VOICE ANNOUNCEMENT ENGINE (SPEECH SYNTHESIS & AUDIBLE EVENT BROADCASTER)
+// =========================================================================
+var VOICE_ALERTS_ENABLED = typeof localStorage !== "undefined" ? localStorage.getItem("terminal_voice_enabled") !== "false" : true;
+
+function toggleTerminalVoiceAlerts() {
+    VOICE_ALERTS_ENABLED = !VOICE_ALERTS_ENABLED;
+    if (typeof localStorage !== "undefined") {
+        localStorage.setItem("terminal_voice_enabled", VOICE_ALERTS_ENABLED);
+    }
+    updateVoiceButtonUI();
+    if (VOICE_ALERTS_ENABLED) {
+        speakVoiceAlert("Voice alerts enabled");
+    }
+}
+window.toggleTerminalVoiceAlerts = toggleTerminalVoiceAlerts;
+
+function updateVoiceButtonUI() {
+    const btn = document.getElementById("btnVoiceToggle");
+    if (btn) {
+        btn.innerHTML = VOICE_ALERTS_ENABLED ? `<span>🗣️ VOICE: ON</span>` : `<span style="color:#94a3b8;">🤐 VOICE: OFF</span>`;
+        btn.style.borderColor = VOICE_ALERTS_ENABLED ? "#38bdf8" : "rgba(148,163,184,0.3)";
+        btn.style.background = VOICE_ALERTS_ENABLED ? "rgba(56,189,248,0.15)" : "rgba(15,23,42,0.6)";
+        btn.style.color = VOICE_ALERTS_ENABLED ? "#38bdf8" : "#94a3b8";
+    }
+}
+
+var _lastSpokenTime = 0;
+function speakVoiceAlert(text) {
+    if (!VOICE_ALERTS_ENABLED) return;
+    const now = Date.now();
+    if (now - _lastSpokenTime < 3000) return; // Debounce 3s to avoid speech overlap
+    _lastSpokenTime = now;
+    try {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.05;
+            utterance.pitch = 1.0;
+            utterance.volume = 0.95;
+            window.speechSynthesis.speak(utterance);
+        }
+    } catch(e) {}
+}
+window.speakVoiceAlert = speakVoiceAlert;
+
+// =========================================================================
+// PERSISTENT COCKPIT EVENT ALERT BANNER (TP1 / TP2 / SL / PULLBACKS)
+// =========================================================================
+function updateCockpitEventAlertStrip(activeTrade, cp) {
+    const strip = document.getElementById("cockpitEventAlertStrip");
+    const icon = document.getElementById("ceasIcon");
+    const title = document.getElementById("ceasTitle");
+    const sub = document.getElementById("ceasSubtitle");
+    const badge = document.getElementById("ceasStatusBadge");
+    if (!strip || !title || !sub) return;
+
+    if (!activeTrade) {
+        title.innerText = "SCANNING LIVE MARKET FOR NEXT SETUP";
+        sub.innerText = "Monitoring liquidity pools and order blocks.";
+        return;
+    }
+
+    if (activeTrade.status === "STOPPED") {
+        strip.style.borderColor = "rgba(239, 68, 68, 0.8)";
+        strip.style.background = "rgba(239, 68, 68, 0.15)";
+        if (icon) icon.innerText = "🛑";
+        title.innerHTML = `<span style="color:#ef4444;">STOP LOSS HIT (-${activeTrade.riskPips || 45} PIPS)</span> • CAPITAL 100% PROTECTED`;
+        sub.innerHTML = `Strict SL defended account at <strong>$${activeTrade.slPrice.toFixed(2)}</strong>. Revenge trading permanently blocked. System analyzing next setup.`;
+        if (badge) {
+            badge.innerText = "🛑 SL DEFENDED";
+            badge.style.color = "#ef4444";
+            badge.style.borderColor = "#ef4444";
+            badge.style.background = "rgba(239,68,68,0.2)";
+        }
+    } else if (activeTrade.status === "DONE" || activeTrade.isTp2Done) {
+        strip.style.borderColor = "rgba(0, 245, 155, 0.8)";
+        strip.style.background = "rgba(0, 245, 155, 0.15)";
+        if (icon) icon.innerText = "👑";
+        title.innerHTML = `<span style="color:var(--color-green);">FULL TARGET SMASHED (+${activeTrade.securedPips || activeTrade.tp2Pips || 210} PIPS)!</span>`;
+        sub.innerHTML = `Mubarak ho! TP2 smashed at <strong>$${activeTrade.tp2Price.toFixed(2)}</strong>. Profit journal me record ho gaya hai. Agli trade 15 second review cooldown ke baad trigger hogi.`;
+        if (badge) {
+            badge.innerText = "👑 FULL TP WON";
+            badge.style.color = "var(--color-green)";
+            badge.style.borderColor = "var(--color-green)";
+            badge.style.background = "rgba(0,245,155,0.2)";
+        }
+    } else if (activeTrade.isTp1Done) {
+        strip.style.borderColor = "rgba(0, 210, 255, 0.8)";
+        strip.style.background = "rgba(0, 210, 255, 0.15)";
+        if (icon) icon.innerText = "💰";
+        title.innerHTML = `<span style="color:#38bdf8;">TARGET 1 SMASHED (+${activeTrade.tp1Pips || 100} PIPS)!</span> • SL TRAILED TO BREAKEVEN ($0.00 RISK)`;
+        sub.innerHTML = `Target 1 ($${activeTrade.tp1Price.toFixed(2)}) hit ho chuka hai! <strong>Market ab Pullback / Retest mode mein hai</strong> — runner lot safe hold karein.`;
+        if (badge) {
+            badge.innerText = "💰 TP1 SECURED";
+            badge.style.color = "#38bdf8";
+            badge.style.borderColor = "#38bdf8";
+            badge.style.background = "rgba(56,189,248,0.2)";
+        }
+    } else if (window._isPullbackActiveNow) {
+        strip.style.borderColor = "rgba(245, 158, 11, 0.8)";
+        strip.style.background = "rgba(245, 158, 11, 0.15)";
+        if (icon) icon.innerText = "🔄";
+        title.innerHTML = `<span style="color:#fbbf24;">PULLBACK IN MOTION (+${window._lastPullbackPips || 20} Pips Retracement)</span> • RETEST POI ACTIVE`;
+        sub.innerHTML = `Market swing level se ghoom kar upar/neeche retest zone ki taraf aa rahi hai. <strong>Beech mein jump na karein!</strong>`;
+        if (badge) {
+            badge.innerText = "🔄 PULLBACK ACTIVE";
+            badge.style.color = "#fbbf24";
+            badge.style.borderColor = "#fbbf24";
+            badge.style.background = "rgba(245,158,11,0.2)";
+        }
+    } else {
+        strip.style.borderColor = "rgba(56, 189, 248, 0.3)";
+        strip.style.background = "rgba(15, 23, 42, 0.85)";
+        if (icon) icon.innerText = "⚡";
+        title.innerHTML = `ACTIVE SETUP #${activeTrade.seq}: ${activeTrade.action} @ $${activeTrade.entryPrice.toFixed(2)}`;
+        sub.innerHTML = `Live Spot: <strong>$${cp.toFixed(2)}</strong> • Continuous Order Flow &amp; Pullback Scanning Active.`;
+        if (badge) {
+            badge.innerText = "🟢 SCANNING";
+            badge.style.color = "var(--color-green)";
+            badge.style.borderColor = "var(--color-green)";
+            badge.style.background = "rgba(0,245,155,0.15)";
+        }
+    }
+}
+window.updateCockpitEventAlertStrip = updateCockpitEventAlertStrip;
+
+// =========================================================================
+// INSTITUTIONAL PULLBACK & RETEST RADAR ENGINE (MARKET GHOOMNE KA SYSTEM)
+// =========================================================================
+var _pullbackSwingLow = null;
+var _pullbackSwingHigh = null;
+var _isPullbackActiveNow = false;
+var _lastPullbackPips = 0;
+
+function updatePullbackRadar(cp, activeTrade) {
+    if (!activeTrade) return;
+
+    const isBear = activeTrade.isBear;
+
+    // Track rolling swing extremes
+    if (_pullbackSwingLow === null || cp < _pullbackSwingLow) {
+        _pullbackSwingLow = cp;
+    }
+    if (_pullbackSwingHigh === null || cp > _pullbackSwingHigh) {
+        _pullbackSwingHigh = cp;
+    }
+
+    // Keep swing extremes anchored near activeTrade
+    if (_pullbackSwingLow < (activeTrade.entryPrice - 30)) _pullbackSwingLow = +(activeTrade.entryPrice - 18).toFixed(2);
+    if (_pullbackSwingHigh > (activeTrade.entryPrice + 30)) _pullbackSwingHigh = +(activeTrade.entryPrice + 18).toFixed(2);
+
+    let swingOrigin = isBear ? _pullbackSwingLow : _pullbackSwingHigh;
+    if (!swingOrigin || isNaN(swingOrigin)) {
+        swingOrigin = isBear ? +(activeTrade.tp1Price - 2.0).toFixed(2) : +(activeTrade.tp1Price + 2.0).toFixed(2);
+    }
+
+    // Retraced pips from swing extreme
+    let pullbackPips = isBear 
+        ? Math.max(0, Math.round((cp - swingOrigin) * 10)) 
+        : Math.max(0, Math.round((swingOrigin - cp) * 10));
+
+    const isPullback = pullbackPips >= 8;
+    _isPullbackActiveNow = isPullback;
+    _lastPullbackPips = pullbackPips;
+
+    // Expected Retest Target POI
+    const retestPoi = activeTrade.entryPrice;
+    const distToPoiPips = Math.round(Math.abs(retestPoi - cp) * 10);
+
+    // Invalidation Level
+    const invalPrice = activeTrade.slPrice;
+
+    // Total distance between swing extreme and invalidation
+    const totalLegRange = Math.max(1, Math.abs(invalPrice - swingOrigin));
+    const rawRatio = (Math.abs(cp - swingOrigin) / totalLegRange) * 100;
+    const fibRatio = Math.min(100, Math.max(0, rawRatio));
+
+    // Categorize Fibonacci Depth
+    let fibName = "0% IMPULSE BASE";
+    let zoneQuality = "Impulse Expansion Move";
+    if (fibRatio >= 25 && fibRatio < 45) {
+        fibName = "38.2% SHALLOW PULLBACK";
+        zoneQuality = "Minor retail profit-taking wick";
+    } else if (fibRatio >= 45 && fibRatio < 58) {
+        fibName = "50.0% EQUILIBRIUM RETEST";
+        zoneQuality = "Fair Value Discount/Premium Balance";
+    } else if (fibRatio >= 58 && fibRatio < 78) {
+        fibName = "⭐ 61.8% GOLDEN OTE POCKET";
+        zoneQuality = "Institutional Optimal Entry Reversal Zone";
+    } else if (fibRatio >= 78) {
+        fibName = "78.6% DEEP STRUCTURAL RETEST";
+        zoneQuality = "High volatility re-mitigation; watch SL";
+    }
+
+    // Update DOM Elements
+    const pbrPhaseBadge = document.getElementById("pbrPhaseBadge");
+    const pbrDepthBadge = document.getElementById("pbrDepthBadge");
+    const pbrSwingOrigin = document.getElementById("pbrSwingOrigin");
+    const pbrRetracePips = document.getElementById("pbrRetracePips");
+    const pbrRetestPoi = document.getElementById("pbrRetestPoi");
+    const pbrDistanceToPoi = document.getElementById("pbrDistanceToPoi");
+    const pbrFibZone = document.getElementById("pbrFibZone");
+    const pbrZoneQuality = document.getElementById("pbrZoneQuality");
+    const pbrInvalPrice = document.getElementById("pbrInvalPrice");
+    const pbrInvalDetail = document.getElementById("pbrInvalDetail");
+    const pbrMeterFill = document.getElementById("pbrMeterFill");
+    const pbrDirectiveBox = document.getElementById("pbrDirectiveBox");
+
+    if (pbrPhaseBadge) {
+        if (isPullback) {
+            pbrPhaseBadge.innerHTML = `🔄 PULLBACK ACTIVE (${isBear ? 'UPWARD BOUNCE' : 'DOWNWARD DIP'})`;
+            pbrPhaseBadge.style.background = "rgba(245, 158, 11, 0.2)";
+            pbrPhaseBadge.style.color = "#fbbf24";
+            pbrPhaseBadge.style.borderColor = "#fbbf24";
+        } else {
+            pbrPhaseBadge.innerHTML = `⚡ IMPULSE EXPANSION (${isBear ? 'MAKING LOWS' : 'MAKING HIGHS'})`;
+            pbrPhaseBadge.style.background = "rgba(0, 245, 155, 0.15)";
+            pbrPhaseBadge.style.color = "var(--color-green)";
+            pbrPhaseBadge.style.borderColor = "var(--color-green)";
+        }
+    }
+
+    if (pbrDepthBadge) {
+        pbrDepthBadge.innerText = `${fibRatio.toFixed(1)}% (${fibName.split(" ")[0]})`;
+    }
+
+    if (pbrSwingOrigin) {
+        pbrSwingOrigin.innerHTML = `$${swingOrigin.toFixed(2)} <span style="font-size:0.75rem; color:#38bdf8; font-weight:700;">${isBear ? 'LOW' : 'HIGH'}</span>`;
+    }
+
+    if (pbrRetracePips) {
+        pbrRetracePips.innerHTML = isPullback 
+            ? `<span style="color:#fbbf24;">${isBear ? '▲' : '▼'} +${pullbackPips} Pips Retracement</span>`
+            : `<span style="color:var(--color-green);">⚡ Zero Pullback • Directional Momentum</span>`;
+    }
+
+    if (pbrRetestPoi) {
+        pbrRetestPoi.innerHTML = `$${retestPoi.toFixed(2)} <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">RETEST</span>`;
+    }
+
+    if (pbrDistanceToPoi) {
+        pbrDistanceToPoi.innerHTML = distToPoiPips <= 6 
+            ? `<strong style="color:var(--color-green);">🎯 TAPPING RETEST ZONE NOW (${distToPoiPips}p)</strong>`
+            : `🎯 Sirf ${distToPoiPips} Pips Door Hai`;
+    }
+
+    if (pbrFibZone) pbrFibZone.innerText = fibName;
+    if (pbrZoneQuality) pbrZoneQuality.innerText = zoneQuality;
+    if (pbrInvalPrice) pbrInvalPrice.innerHTML = `$${invalPrice.toFixed(2)} <span style="font-size:0.75rem; color:#fca5a5; font-weight:700;">INVALIDATION</span>`;
+    if (pbrInvalDetail) pbrInvalDetail.innerText = `Agar candle is se aage close ho to pullback fail`;
+
+    if (pbrMeterFill) {
+        pbrMeterFill.style.width = `${Math.min(100, Math.max(8, fibRatio))}%`;
+        if (fibRatio >= 50 && fibRatio <= 75) {
+            pbrMeterFill.style.background = "linear-gradient(90deg, #38bdf8, #00f59b)";
+        } else if (fibRatio > 75) {
+            pbrMeterFill.style.background = "linear-gradient(90deg, #f59e0b, #ef4444)";
+        } else {
+            pbrMeterFill.style.background = "linear-gradient(90deg, #38bdf8, #a855f7)";
+        }
+    }
+
+    if (pbrDirectiveBox) {
+        if (distToPoiPips <= 6) {
+            pbrDirectiveBox.innerHTML = `🎯 <strong>RETEST POI TAP HO GAYA ($${retestPoi.toFixed(2)})!</strong> Market ne pullback complete kar liya hai. Yahan 1M/5M rejection wick dekhein aur active setup execute karein!`;
+            pbrDirectiveBox.style.background = "rgba(0, 245, 155, 0.12)";
+            pbrDirectiveBox.style.borderLeftColor = "var(--color-green)";
+            pbrDirectiveBox.style.color = "#a7f3d0";
+        } else if (isPullback) {
+            pbrDirectiveBox.innerHTML = `👉 <strong>PULLBACK CHAL RAHA HAI (+${pullbackPips} Pips):</strong> Market ${isBear ? 'low' : 'high'} ($${swingOrigin.toFixed(2)}) se ghoom kar retest zone ($${retestPoi.toFixed(2)}) ki taraf ja rahi hai. <strong>Beech raste mein be-sabri mein entry mat lein!</strong> Retest level par institutional rejection ka intezar karein.`;
+            pbrDirectiveBox.style.background = "rgba(245, 158, 11, 0.12)";
+            pbrDirectiveBox.style.borderLeftColor = "#fbbf24";
+            pbrDirectiveBox.style.color = "#fef08a";
+        } else {
+            pbrDirectiveBox.innerHTML = `⚡ <strong>STRONG IMPULSE MOMENTUM:</strong> Market fresh swing extreme bana rahi hai. Jab tak market ghoom kar pullback na le, tab tak top/bottom chase na karein!`;
+            pbrDirectiveBox.style.background = "rgba(56, 189, 248, 0.1)";
+            pbrDirectiveBox.style.borderLeftColor = "#38bdf8";
+            pbrDirectiveBox.style.color = "#bae6fd";
+        }
+    }
+}
+window.updatePullbackRadar = updatePullbackRadar;
 
 // ==========================================
 // MASTER UNIFIED COCKPIT - REAL-TIME TICKING & DYNAMIC TARGET ENGINE
@@ -3341,6 +3623,12 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                         t.completedAt = Date.now();
                         registerAutonomousLossGuard(t, cp);
                         if (typeof playSlAlertChime === "function") playSlAlertChime();
+                        if (typeof speakVoiceAlert === "function") {
+                            speakVoiceAlert(`Stop loss hit. Capital protected at ${t.slPrice.toFixed(0)}. Anti-revenge guard active.`);
+                        }
+                        if (typeof showLiveUnfrozenToast === "function") {
+                            showLiveUnfrozenToast(`🛑 STOP LOSS HIT: Trade #${t.seq} defended capital at $${t.slPrice.toFixed(2)} (-${t.riskPips || 45} Pips). Anti-revenge delay active.`);
+                        }
                         if (typeof autoDetectAndSyncPipelineToJournal === "function") autoDetectAndSyncPipelineToJournal();
                         return;
                     }
@@ -3354,8 +3642,11 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                         t.securedPips = t.tp1Pips || 100;
                         t.badge = `💰 TP1 SMASHED (+${t.securedPips} Pips)`;
                         if (typeof playTpSmashChime === "function") playTpSmashChime();
+                        if (typeof speakVoiceAlert === "function") {
+                            speakVoiceAlert(`Target one hit! Plus ${t.securedPips} pips secured. Moving stop loss to break-even. Market pulling back.`);
+                        }
                         if (typeof showLiveUnfrozenToast === "function") {
-                            showLiveUnfrozenToast(`💰 TP1 SMASHED: Trade #${t.seq} hit Target 1 (+${t.securedPips} Pips)! Stop Loss Breakeven par moved.`);
+                            showLiveUnfrozenToast(`💰 TP1 SMASHED: Trade #${t.seq} hit Target 1 (+${t.securedPips} Pips)! Stop Loss Breakeven par moved. Pullback radar active.`);
                         }
                         // Auto-Move SL to Breakeven on TP1 smash (Risk-Free Guard)
                         if (!t.isBeMoved) {
@@ -3375,6 +3666,9 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                         t.badge = `✅ SMASHED +${t.securedPips} PIPS`;
                         t.completedAt = Date.now();
                         if (typeof playTpSmashChime === "function") playTpSmashChime();
+                        if (typeof speakVoiceAlert === "function") {
+                            speakVoiceAlert(`Full target smashed! Plus ${t.securedPips} pips profit locked in journal.`);
+                        }
                         if (typeof showLiveUnfrozenToast === "function") {
                             showLiveUnfrozenToast(`👑 FULL TARGET SMASHED! Trade #${t.seq} hit TP2 (+${t.securedPips} Pips)! Munafa Journal me lock ho gaya.`);
                         }
@@ -3929,22 +4223,40 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     macLivePulse.style.boxShadow = "0 0 10px #fbbf24";
                 }
             } else if (activeTrade.isFilled) {
-                const curProfitPips = isTradeBear ? ((activeTrade.entryPrice - cp) * 10).toFixed(0) : ((cp - activeTrade.entryPrice) * 10).toFixed(0);
-                const isProf = Number(curProfitPips) >= 0;
-                macActionTitle.innerHTML = isTradeBear ? `🔴 SELL HOLD KAREIN (${isProf ? '+' : ''}${curProfitPips}p)` : `🟢 BUY HOLD KAREIN (${isProf ? '+' : ''}${curProfitPips}p)`;
-                macActionTitle.style.color = isTradeBear ? "#ef4444" : "#00f59b";
-                if (macActionSub) {
-                    macActionSub.innerHTML = `Order Filled @ $${(activeTrade.fillPrice || entryPrice).toFixed(2)} • Position in play hai, TP1 ($${tp1Price.toFixed(2)}) tak hold karein.`;
-                }
-                if (macStateBadge) {
-                    macStateBadge.innerHTML = `🚀 LIVE IN PLAY (${isProf ? '+' : ''}${curProfitPips}p)`;
-                    macStateBadge.style.background = "rgba(0, 245, 155, 0.2)";
-                    macStateBadge.style.color = "#00f59b";
-                    macStateBadge.style.borderColor = "#00f59b";
-                }
-                if (macLivePulse) {
-                    macLivePulse.style.background = "#00f59b";
-                    macLivePulse.style.boxShadow = "0 0 12px #00f59b";
+                if (activeTrade.isTp1Done) {
+                    macActionTitle.innerHTML = `💰 TP1 SMASHED (+${activeTrade.tp1Pips || 100}p)`;
+                    macActionTitle.style.color = "#38bdf8";
+                    if (macActionSub) {
+                        macActionSub.innerHTML = `Target 1 secured! SL breakeven ($${activeTrade.entryPrice.toFixed(2)}) par lock hai. Market ab Pullback le sakti hai — TP2 ($${tp2Price.toFixed(2)}) tak runner hold karein!`;
+                    }
+                    if (macStateBadge) {
+                        macStateBadge.innerHTML = `💰 TP1 HIT • PULLBACK ACTIVE`;
+                        macStateBadge.style.background = "rgba(56, 189, 248, 0.2)";
+                        macStateBadge.style.color = "#38bdf8";
+                        macStateBadge.style.borderColor = "#38bdf8";
+                    }
+                    if (macLivePulse) {
+                        macLivePulse.style.background = "#38bdf8";
+                        macLivePulse.style.boxShadow = "0 0 12px #38bdf8";
+                    }
+                } else {
+                    const curProfitPips = isTradeBear ? ((activeTrade.entryPrice - cp) * 10).toFixed(0) : ((cp - activeTrade.entryPrice) * 10).toFixed(0);
+                    const isProf = Number(curProfitPips) >= 0;
+                    macActionTitle.innerHTML = isTradeBear ? `🔴 SELL HOLD KAREIN (${isProf ? '+' : ''}${curProfitPips}p)` : `🟢 BUY HOLD KAREIN (${isProf ? '+' : ''}${curProfitPips}p)`;
+                    macActionTitle.style.color = isTradeBear ? "#ef4444" : "#00f59b";
+                    if (macActionSub) {
+                        macActionSub.innerHTML = `Order Filled @ $${(activeTrade.fillPrice || entryPrice).toFixed(2)} • Position in play hai, TP1 ($${tp1Price.toFixed(2)}) tak hold karein.`;
+                    }
+                    if (macStateBadge) {
+                        macStateBadge.innerHTML = `🚀 LIVE IN PLAY (${isProf ? '+' : ''}${curProfitPips}p)`;
+                        macStateBadge.style.background = "rgba(0, 245, 155, 0.2)";
+                        macStateBadge.style.color = "#00f59b";
+                        macStateBadge.style.borderColor = "#00f59b";
+                    }
+                    if (macLivePulse) {
+                        macLivePulse.style.background = "#00f59b";
+                        macLivePulse.style.boxShadow = "0 0 12px #00f59b";
+                    }
                 }
             } else {
                 // Pending Setup - Stable Institutional Directives (Zero Flashing / No Flickering)
@@ -4531,6 +4843,12 @@ function syncMasterUnifiedCockpit(gold, isBear) {
 
         // In-Between Sideways & Consolidation Box Scalper Engine
         updateConsolidationBox(cp);
+
+        // Institutional Pullback & Retest Radar Engine (Market Ghoomne Ka System)
+        updatePullbackRadar(cp, activeTrade);
+
+        // Persistent Cockpit Event Alert Strip (TP1 / TP2 / SL / Pullback Alerts)
+        updateCockpitEventAlertStrip(activeTrade, cp);
     } catch(err) {
         console.warn("[Cockpit] Sync error auto-recovered:", err);
     }

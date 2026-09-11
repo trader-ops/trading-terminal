@@ -6884,5 +6884,23 @@ body {
     transform: translateY(1px);
 }
 
+/* COCKPIT EVENT ALERT STRIP & PULLBACK RADAR */
+.cockpit-event-alert-strip {
+    animation: alertPulseBorder 3s infinite alternate;
+}
+
+@keyframes alertPulseBorder {
+    0% { box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    100% { box-shadow: 0 4px 22px rgba(56, 189, 248, 0.25); }
+}
+
+.master-pullback-radar-card {
+    transition: all 0.3s ease;
+}
+
+.master-pullback-radar-card:hover {
+    border-color: rgba(245, 158, 11, 0.7) !important;
+}
+
 
 

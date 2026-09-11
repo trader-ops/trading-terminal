@@ -201,6 +201,29 @@
                         </div>
                     </div>
 
+                    <!-- PERSISTENT REAL-TIME COCKPIT EVENT ALERT BANNER (TP HIT / SL HIT / PULLBACKS) -->
+                    <div class="cockpit-event-alert-strip" id="cockpitEventAlertStrip" style="margin-bottom:12px; background:rgba(15,23,42,0.85); border:1.5px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 15px rgba(0,0,0,0.3); transition:all 0.3s ease;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span id="ceasIcon" style="font-size:1.3rem;">⚡</span>
+                            <div>
+                                <div id="ceasTitle" style="font-size:0.95rem; font-weight:900; color:#fff; font-family:var(--font-mono); letter-spacing:0.5px;">
+                                    LIVE MARKET &amp; PULLBACK SCANNING ACTIVE
+                                </div>
+                                <div id="ceasSubtitle" style="font-size:0.8rem; color:#cbd5e1; margin-top:2px;">
+                                    Monitoring Spot vs POI Zones • Pullback Retest Engine Online
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button type="button" id="btnVoiceToggle" onclick="toggleTerminalVoiceAlerts()" style="background:rgba(56,189,248,0.15); border:1px solid #38bdf8; color:#38bdf8; font-family:var(--font-mono); font-size:0.75rem; font-weight:800; padding:6px 12px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                <span>🗣️ VOICE: ON</span>
+                            </button>
+                            <span id="ceasStatusBadge" style="background:rgba(0,245,155,0.15); border:1px solid var(--color-green); color:var(--color-green); font-size:0.75rem; font-weight:900; font-family:var(--font-mono); padding:5px 12px; border-radius:6px;">
+                                🟢 SYNCED
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- 1. BADA CLEAN MASTER ACTION CARD (3 CHEEZEIN: KIA KARNA HAI, EXACT RATE, STOP LOSS) -->
                     <div class="master-action-cockpit" id="masterActionCockpit" style="margin-bottom:14px; background:linear-gradient(135deg, #090e17 0%, #0d1527 100%); border:2px solid rgba(0, 210, 255, 0.4); border-radius:12px; padding:18px 20px; box-shadow:0 8px 30px rgba(0,0,0,0.5); position:relative; overflow:hidden;">
                         
@@ -244,6 +267,97 @@
                             </div>
 
                         </div>
+                    </div>
+
+                    <!-- INSTITUTIONAL PULLBACK & RETEST RADAR CARD (MARKET GHOOMNE KA SYSTEM) -->
+                    <div class="master-pullback-radar-card" id="masterPullbackRadarCard" style="margin-bottom:14px; background:linear-gradient(135deg, #0a0f1d 0%, #0d172a 100%); border:2px solid rgba(245, 158, 11, 0.4); border-radius:12px; padding:16px 20px; box-shadow:0 6px 25px rgba(0,0,0,0.4); position:relative;">
+                        
+                        <!-- Top Header -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.2rem;">🔄</span>
+                                <span style="font-size:0.9rem; font-weight:900; color:#fbbf24; font-family:var(--font-mono); letter-spacing:0.5px;">
+                                    INSTITUTIONAL PULLBACK &amp; RETEST RADAR (مارکیٹ پل بیک اور ری ٹیسٹ کا نظام)
+                                </span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span id="pbrPhaseBadge" style="font-size:0.75rem; font-weight:900; padding:4px 12px; border-radius:6px; background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #fbbf24; font-family:var(--font-mono);">
+                                    🔄 PULLBACK DETECTED
+                                </span>
+                                <span id="pbrDepthBadge" style="font-size:0.75rem; font-weight:900; padding:4px 10px; border-radius:6px; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid #38bdf8; font-family:var(--font-mono);">
+                                    50.0% EQUILIBRIUM
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Main 4-Box Telemetry Grid -->
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:14px;">
+                            
+                            <!-- Box 1: Origin & Swing Point -->
+                            <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 14px;">
+                                <span style="color:#94a3b8; font-size:0.7rem; font-weight:800; text-transform:uppercase; display:block; margin-bottom:4px;">1. KAHAN SE GHOOMI? (SWING ORIGIN)</span>
+                                <div id="pbrSwingOrigin" style="font-size:1.15rem; font-weight:900; color:#fff; font-family:var(--font-mono);">
+                                    $4,342.10 <span style="font-size:0.75rem; color:#38bdf8; font-weight:700;">LOW</span>
+                                </div>
+                                <div id="pbrRetracePips" style="font-size:0.75rem; color:#fde047; margin-top:4px; font-weight:800;">
+                                    ▲ +48 Pips Bounce (+0.36%)
+                                </div>
+                            </div>
+
+                            <!-- Box 2: Expected Retest POI -->
+                            <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 14px;">
+                                <span style="color:#94a3b8; font-size:0.7rem; font-weight:800; text-transform:uppercase; display:block; margin-bottom:4px;">2. KAHAN TAK GHOOM SAKTI HAI? (RETEST POI)</span>
+                                <div id="pbrRetestPoi" style="font-size:1.15rem; font-weight:900; color:#38bdf8; font-family:var(--font-mono);">
+                                    $4,354.00 <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">15M FVG</span>
+                                </div>
+                                <div id="pbrDistanceToPoi" style="font-size:0.75rem; color:#cbd5e1; margin-top:4px; font-weight:700;">
+                                    🎯 Sirf 18 Pips Door Hai
+                                </div>
+                            </div>
+
+                            <!-- Box 3: Fibonacci Retracement Depth -->
+                            <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 14px;">
+                                <span style="color:#94a3b8; font-size:0.7rem; font-weight:800; text-transform:uppercase; display:block; margin-bottom:4px;">3. RETRACEMENT DEPTH (FIB ZONE)</span>
+                                <div id="pbrFibZone" style="font-size:1.15rem; font-weight:900; color:#a855f7; font-family:var(--font-mono);">
+                                    ⭐ 61.8% OTE POCKET
+                                </div>
+                                <div id="pbrZoneQuality" style="font-size:0.75rem; color:#00f59b; margin-top:4px; font-weight:800;">
+                                    Institutional Reversal Edge
+                                </div>
+                            </div>
+
+                            <!-- Box 4: Pullback Invalidation Level -->
+                            <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 14px;">
+                                <span style="color:#94a3b8; font-size:0.7rem; font-weight:800; text-transform:uppercase; display:block; margin-bottom:4px;">4. PULLBACK KAB FAIL HOGA? (INVAL)</span>
+                                <div id="pbrInvalPrice" style="font-size:1.15rem; font-weight:900; color:#ef4444; font-family:var(--font-mono);">
+                                    $4,369.00 <span style="font-size:0.75rem; color:#fca5a5; font-weight:700;">INVALIDATION</span>
+                                </div>
+                                <div id="pbrInvalDetail" style="font-size:0.75rem; color:#94a3b8; margin-top:4px; font-weight:700;">
+                                    Agar 15M candle is se cross kare
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Visual Multi-Zone Fibonacci Retracement Meter -->
+                        <div style="margin-bottom:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#94a3b8; font-family:var(--font-mono); margin-bottom:4px; font-weight:700;">
+                                <span>0% ORIGIN</span>
+                                <span>38.2% SHALLOW</span>
+                                <span style="color:#38bdf8;">50% EQUILIBRIUM</span>
+                                <span style="color:#00f59b;">61.8% GOLDEN OTE ⭐</span>
+                                <span style="color:#ef4444;">100% INVAL</span>
+                            </div>
+                            <div style="height:10px; background:#0b1322; border-radius:5px; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.1);">
+                                <div id="pbrMeterFill" style="height:100%; width:54%; background:linear-gradient(90deg, #38bdf8, #a855f7, #00f59b); transition:width 0.4s ease; box-shadow:0 0 10px rgba(168,85,247,0.5);"></div>
+                            </div>
+                        </div>
+
+                        <!-- Direct AI "KIA KARNA HAI?" Action Directive -->
+                        <div id="pbrDirectiveBox" style="background:rgba(245,158,11,0.1); border-left:4px solid #fbbf24; border-radius:6px; padding:10px 14px; font-size:0.83rem; color:#fef08a; line-height:1.4;">
+                            👉 <strong>KIA KARNA HAI (PULLBACK PROTOCOL):</strong> Market low ($4,342) se ghoom kar upar pullback le rahi hai. <strong>Beech raste mein be-sabri mein buy ya sell MAT karein!</strong> $4,354 Retest zone par 1M bearish rejection wick banne ka intezar karein, taake top supply se sell mile!
+                        </div>
+
                     </div>
 
                     <!-- 2. REASON CARD RIGHT BELOW (KIS BINA PAR YEH TRADE EXECUTE HUI) -->
