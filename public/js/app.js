@@ -3512,13 +3512,13 @@ function updatePullbackRadar(cp, activeTrade) {
     if (pbrDistanceToPoi) {
         pbrDistanceToPoi.innerHTML = distToPoiPips <= 6 
             ? `<strong style="color:var(--color-green);">🎯 TAPPING RETEST ZONE NOW (${distToPoiPips}p)</strong>`
-            : `🎯 Sirf ${distToPoiPips} Pips Door Hai`;
+            : `🎯 Distance: ${distToPoiPips} Pips Away`;
     }
 
     if (pbrFibZone) pbrFibZone.innerText = fibName;
     if (pbrZoneQuality) pbrZoneQuality.innerText = zoneQuality;
     if (pbrInvalPrice) pbrInvalPrice.innerHTML = `$${invalPrice.toFixed(2)} <span style="font-size:0.75rem; color:#fca5a5; font-weight:700;">INVALIDATION</span>`;
-    if (pbrInvalDetail) pbrInvalDetail.innerText = `Agar candle is se aage close ho to pullback fail`;
+    if (pbrInvalDetail) pbrInvalDetail.innerText = `15M candle close breach invalidates setup`;
 
     if (pbrMeterFill) {
         pbrMeterFill.style.width = `${Math.min(100, Math.max(8, fibRatio))}%`;
@@ -3533,17 +3533,17 @@ function updatePullbackRadar(cp, activeTrade) {
 
     if (pbrDirectiveBox) {
         if (distToPoiPips <= 6) {
-            pbrDirectiveBox.innerHTML = `🎯 <strong>RETEST POI TAP HO GAYA ($${retestPoi.toFixed(2)})!</strong> Market ne pullback complete kar liya hai. Yahan 1M/5M rejection wick dekhein aur active setup execute karein!`;
+            pbrDirectiveBox.innerHTML = `🎯 <strong>RETEST POI TAPPED ($${retestPoi.toFixed(2)})!</strong> Retracement phase complete. Monitor 1M/5M rejection wick to execute active institutional setup.`;
             pbrDirectiveBox.style.background = "rgba(0, 245, 155, 0.12)";
             pbrDirectiveBox.style.borderLeftColor = "var(--color-green)";
             pbrDirectiveBox.style.color = "#a7f3d0";
         } else if (isPullback) {
-            pbrDirectiveBox.innerHTML = `👉 <strong>PULLBACK CHAL RAHA HAI (+${pullbackPips} Pips):</strong> Market ${isBear ? 'low' : 'high'} ($${swingOrigin.toFixed(2)}) se ghoom kar retest zone ($${retestPoi.toFixed(2)}) ki taraf ja rahi hai. <strong>Beech raste mein be-sabri mein entry mat lein!</strong> Retest level par institutional rejection ka intezar karein.`;
+            pbrDirectiveBox.innerHTML = `👉 <strong>PULLBACK ACTIVE (+${pullbackPips} Pips Retracement):</strong> Price rebounding from ${isBear ? 'low' : 'high'} ($${swingOrigin.toFixed(2)}) toward Retest POI ($${retestPoi.toFixed(2)}). <strong>Avoid chasing mid-move!</strong> Await key zone confirmation for continuation.`;
             pbrDirectiveBox.style.background = "rgba(245, 158, 11, 0.12)";
             pbrDirectiveBox.style.borderLeftColor = "#fbbf24";
             pbrDirectiveBox.style.color = "#fef08a";
         } else {
-            pbrDirectiveBox.innerHTML = `⚡ <strong>STRONG IMPULSE MOMENTUM:</strong> Market fresh swing extreme bana rahi hai. Jab tak market ghoom kar pullback na le, tab tak top/bottom chase na karein!`;
+            pbrDirectiveBox.innerHTML = `⚡ <strong>IMPULSE EXPANSION IN PROGRESS:</strong> Market creating fresh swing extremes. Await retrace / pullback structure before executing secondary entries.`;
             pbrDirectiveBox.style.background = "rgba(56, 189, 248, 0.1)";
             pbrDirectiveBox.style.borderLeftColor = "#38bdf8";
             pbrDirectiveBox.style.color = "#bae6fd";
