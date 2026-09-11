@@ -323,12 +323,12 @@
                     <div id="cockpitPostMortemBox" class="cockpit-post-mortem-box"></div>
 
                 <!-- ============================================================
-                     IN-DEPTH REASONS, TP LADDER & TELEMETRY (COLLAPSED BY DEFAULT - ZERO FLUFF)
+                     IN-DEPTH REASONS, TP LADDER & TELEMETRY (OPEN BY DEFAULT - ZERO CLUTTER)
                      ============================================================ -->
-                <details class="cockpit-deep-details-drawer">
+                <details class="cockpit-deep-details-drawer" open>
                     <summary>
-                        <span>📊 [+ WAJUHAAT / SMC / MACRO / REASON DETAILS DEKHEIN]</span>
-                        <span style="font-size:0.75rem; color:#00d2ff;">[Click to Expand / Collapse Raw Details] ▾</span>
+                        <span>📊 [🔍 WAJUHAAT / SMC / MACRO / REASONS ANALYSIS DETAILS]</span>
+                        <span style="font-size:0.75rem; color:#00d2ff;">[Click to Collapse / Expand] ▾</span>
                     </summary>
                     <div class="cdd-content">
 
@@ -537,11 +537,11 @@
                 </div>
             </div>
 
-            <!-- MULTI-TIMEFRAME DEEP AUDIT (COLLAPSIBLE - ZERO CLUTTER) -->
-            <details class="omni-tech-drawer">
+            <!-- MULTI-TIMEFRAME DEEP AUDIT (OPEN BY DEFAULT) -->
+            <details class="omni-tech-drawer" open>
                 <summary class="omni-tech-drawer-summary">
                     <span>🔍 Multi-Timeframe (4H ➔ 1H ➔ 15M ➔ 1M) Deep Telemetry &amp; Confluence Audit</span>
-                    <span style="font-size:0.7rem; color:var(--color-cyan);">[Click to Expand / Collapse Raw Details] ▾</span>
+                    <span style="font-size:0.7rem; color:var(--color-cyan);">[Click to Collapse / Expand] ▾</span>
                 </summary>
                 <div class="omni-tech-drawer-content">
                     <!-- OMNI 360° SYNTHESIS STRIP -->
@@ -1123,9 +1123,9 @@
                     </div>
                     <!-- Live TradingView Mini Chart for US10Y (Zero-Block Institutional Series) -->
                     <div class="mlb-iframe-frame">
-                        <iframe src="https://s.tradingview.com/widgetembed/?symbol=FRED%3ADGS10&interval=D&theme=dark&style=3&timezone=Etc%2FUTC&hide_top_toolbar=1&hide_legend=0&save_image=0&locale=en" 
+                        <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUS10Y&interval=15&theme=dark&style=3&timezone=Etc%2FUTC&hide_top_toolbar=1&hide_legend=0&save_image=0&locale=en" 
                             style="width: 100%; height: 160px; border: none; overflow:hidden;" scrolling="no"
-                            title="US 10-Year Treasury Yield (DGS10)">
+                            title="US 10-Year Treasury Yield (TVC:US10Y)">
                         </iframe>
                     </div>
                     <div class="mlb-footer-stats">
@@ -1161,7 +1161,7 @@
             </div>
             <div class="chart-control-bar">
                 <div class="asset-pills" id="chartAssetPills">
-                    <button class="asset-btn active" data-symbol="OANDA:XAUUSD" data-name="XAUUSD">XAU/USD (Gold)</button>
+                    <button class="asset-btn active" data-symbol="TVC:GOLD" data-name="XAUUSD">XAU/USD (Gold)</button>
                     <button class="asset-btn" data-symbol="CAPITALCOM:DXY" data-name="DXY">DXY (US Dollar)</button>
                     <button class="asset-btn" data-symbol="FX:EURUSD" data-name="EURUSD">EUR/USD</button>
                     <button class="asset-btn" data-symbol="FX:GBPUSD" data-name="GBPUSD">GBP/USD</button>
@@ -1186,7 +1186,7 @@
             <!-- Direct Iframe Chart -->
             <div class="chart-container" id="tradingview_chart_wrapper">
                 <iframe id="tv_chart_iframe" 
-                    src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=5&theme=dark&style=1&timezone=Etc%2FUTC&hide_side_toolbar=0&allow_symbol_change=1&save_image=0&locale=en" 
+                    src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AGOLD&interval=5&theme=dark&style=1&timezone=Etc%2FUTC&hide_side_toolbar=0&allow_symbol_change=1&save_image=0&locale=en" 
                     style="width: 100%; height: 100%; border: none;">
                 </iframe>
             </div>

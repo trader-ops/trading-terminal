@@ -397,7 +397,7 @@ let ASSETS = {
         currentPrice: 4357.31,
         direction: "DOWN",
         changePct: "-1.11%",
-        tvSymbol: "OANDA:XAUUSD",
+        tvSymbol: "TVC:GOLD",
         volatility: 0.40,
         confidence: "94% (Macro SSL Breakdown Dump)",
         structure: "Lower Highs (LH) & Lower Lows (LL) Active",
@@ -2499,7 +2499,13 @@ const DAY_TRADE_PIPELINE = [
         status: "ACTIVE",
         winProb: 89,
         probGrade: "A+ PRIME",
-        summary: "Active Live Setup: Retest of $4,364.50 resistance targeting $4,352 and $4,342."
+        summary: "Active Live Setup: Retest of $4,364.50 resistance targeting $4,352 and $4,342.",
+        smcAnalysis: "15M Supply Order Block ($4,364.50 – $4,366.50) par rejection wicks confirm ho rahi hain. 5M par Bearish CHoCH ban chuka hai aur price continuous Lower Highs (LH) banati hui Sell-Side Liquidity hunt kar rahi hai.",
+        macroAnalysis: "DXY Index 99.14 par support le kar pump kar raha hai aur US 10Y Yields 4.97% par surge kar rahi hain. Strong Dollar aur bond yields Gold se capital drain kar rahe hain jis se downward continuation confirmed hai.",
+        liqAnalysis: "Whale BSL ($4,366.00) sweep karke retail long breakout buyers ko trap kar liya gaya hai (Judas Trap). Institutional sell orders deliver ho rahe hain aur market TP1 ($4,352.00) aur TP2 ($4,342.00) SSL pool ko hunt karne ja rahi hai.",
+        newsAnalysis: "FinancialJuice live wire: Yellow Folder Clean Order Flow. Koi hawkish pause ya geopolitical spike nahi hai. Trend sell favor mein clean hai.",
+        winReason: "15M Supply zone se clean bearish rejection milli aur continuous order flow sell targets ki taraf deliver ho raha hai.",
+        disciplineRule: "Strict 45 pips SL ($4,369.00) protected. 1:2 ($4,352.00) par partial profit lock and breakeven trail rule active."
     },
     {
         id: "trade_14",
@@ -2532,7 +2538,13 @@ const DAY_TRADE_PIPELINE = [
         status: "QUEUED",
         winProb: 91,
         probGrade: "A INSTITUTIONAL",
-        summary: "Queued Setup: Retest of $4,372.50 Breaker Supply targeting $4,358 & $4,345."
+        summary: "Queued Setup: Retest of $4,372.50 Breaker Supply targeting $4,358 & $4,345.",
+        smcAnalysis: "15M Broken Support level ($4,372.50) ab Breaker Block resistance ban chuka hai. Price ne 5M FVG mitigate kiya aur bearish displacement candle form hui.",
+        macroAnalysis: "US Dollar Index 99.20+ key high retest kar raha hai. Yields high rehne se Gold par recovery bounce sell-off mein convert ho rahi hai.",
+        liqAnalysis: "Asian High sweep ke baad London liquidity clear ho chuki hai. Ab target deep Sell-Side Liquidity ($4,358.00 aur $4,345.00) hai.",
+        newsAnalysis: "Live wire par calm order flow hai. Macro factors trend continuation ko support kar rahe hain.",
+        winReason: "Breaker block supply retest successful.",
+        disciplineRule: "Risk strict 45 pips par cap rahega."
     },
     {
         id: "trade_15",
@@ -2565,7 +2577,13 @@ const DAY_TRADE_PIPELINE = [
         status: "QUEUED",
         winProb: 88,
         probGrade: "A- DEMAND BOUNCE",
-        summary: "Queued Setup: Institutional discount SSL sweep at $4,345 targeting $4,358 bounce."
+        summary: "Queued Setup: Institutional discount SSL sweep at $4,345 targeting $4,358 bounce.",
+        smcAnalysis: "Major 4H Demand POI ($4,345.00) par massive liquidity absorption dekhne ko mil rahi hai. 1M/5M par Bullish MSS (Market Structure Shift) trigger hone par sniper long scalp.",
+        macroAnalysis: "DXY 99.40 resistance par stall ho raha hai aur 10Y yields short-term pullback le rahi hain jo Gold ko relief bounce degi.",
+        liqAnalysis: "Sell-Side Liquidity ($4,342.00) par retail sellers ko stop-hunt karke smart money discount accumulation kar rahi hai. Target: $4,358.00 BSL.",
+        newsAnalysis: "US session closing wire: profit taking flow active. Short covering bounce in play.",
+        winReason: "Deep discount demand block tap aur order book accumulation.",
+        disciplineRule: "Tight SL below demand low."
     },
     {
         id: "trade_16",
@@ -2598,7 +2616,13 @@ const DAY_TRADE_PIPELINE = [
         status: "QUEUED",
         winProb: 92,
         probGrade: "A+ PRIME",
-        summary: "Queued Setup: Retest of $4,368 supply targeting $4,354 & $4,342."
+        summary: "Queued Setup: Retest of $4,368 supply targeting $4,354 & $4,342.",
+        smcAnalysis: "15M Fair Value Gap ($4,367.00 – $4,369.50) tap hone par downward continuation momentum.",
+        macroAnalysis: "Dollar index bullish momentum sustain rehne se metal space par selling pressure intact hai.",
+        liqAnalysis: "Intraday equal lows liquidity sweep target ($4,354 & $4,342).",
+        newsAnalysis: "Order flow balanced, institutional trend continuation active.",
+        winReason: "15M FVG fill and clean rejection.",
+        disciplineRule: "Partial book at 1:2."
     }
 ];
 
@@ -4602,14 +4626,21 @@ function computeRealtimeConfluence() {
         }
 
 
-        if (omni1hMacro) omni1hMacro.innerText = "$4,420.00 – $4,435.00";
+        if (omni4hAnchor) omni4hAnchor.innerText = `$${(activeTrade.entryPrice - 15).toFixed(2)} – $${(activeTrade.entryPrice + 15).toFixed(2)}`;
+        if (omni1hMacro) omni1hMacro.innerText = `$${(activeTrade.zoneMin - 2).toFixed(2)} – $${(activeTrade.zoneMax + 2).toFixed(2)}`;
         const omni1hBos = document.getElementById("omni1hBos");
-        if (omni1hBos) omni1hBos.innerText = "$4,435.00 (Broken 🔴)";
+        if (omni1hBos) omni1hBos.innerText = `$${(activeTrade.entryPrice + 2.5).toFixed(2)} (Broken 🔴)`;
         if (omniEntry) omniEntry.innerText = `$${activeTrade.zoneMin.toFixed(2)} – $${activeTrade.zoneMax.toFixed(2)}`;
         if (omniPinpoint) omniPinpoint.innerText = `$${activeTrade.entryPrice.toFixed(2)} (${activeTrade.reason})`;
         const omni1mChoch = document.getElementById("omni1mChoch");
-        if (omni1mChoch) omni1mChoch.innerText = "$4,423.00 (MSS Flip)";
+        if (omni1mChoch) omni1mChoch.innerText = `$${(activeTrade.entryPrice - 1.5).toFixed(2)} (MSS Flip)`;
         if (omniSl) omniSl.innerText = `$${activeTrade.slPrice.toFixed(2)} (${activeTrade.subText})`;
+        if (omniSafeSl) omniSafeSl.innerText = `$${(activeTrade.slPrice + 3.0).toFixed(2)} (Above 1H OB)`;
+        if (omniFinalTitle) omniFinalTitle.innerText = `▼ SELL @ $${activeTrade.entryPrice.toFixed(2)} • 🛑 SL: $${activeTrade.slPrice.toFixed(2)} • 🎯 TP1: $${activeTrade.tp1Price.toFixed(2)} • 🚀 TP2: $${activeTrade.tp2Price.toFixed(2)}`;
+        if (mtf4hZone) mtf4hZone.innerText = `$${(activeTrade.entryPrice - 15).toFixed(2)} – $${(activeTrade.entryPrice + 15).toFixed(2)}`;
+        if (mtf1hZone) mtf1hZone.innerText = `$${(activeTrade.zoneMin - 2).toFixed(2)} – $${(activeTrade.zoneMax + 2).toFixed(2)}`;
+        if (mtf15mZone) mtf15mZone.innerText = `$${activeTrade.zoneMin.toFixed(2)} – $${activeTrade.zoneMax.toFixed(2)}`;
+        if (mtf1mZone) mtf1mZone.innerText = `$${(activeTrade.entryPrice - 0.5).toFixed(2)} – $${(activeTrade.entryPrice + 0.5).toFixed(2)}`;
         if (omniTp1) {
             if (cp <= activeTrade.tp1Price || activeTrade.status === "DONE") {
                 omniTp1.innerHTML = `$${activeTrade.tp1Price.toFixed(2)} <span style="color:var(--color-green); font-weight:900;">[✅ TP1 SMASHED • +${activeTrade.tp1Pips} Pips]</span>`;
