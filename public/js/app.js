@@ -999,11 +999,18 @@ function updateDynamicLiquidityPools(cp, isBear) {
 
         // 3. Current Mid Price Tracker & Progress Fill Bar
         const poolRange = Math.max(1, Math.abs(bslTarget - sslTarget));
-        const progressPct = Math.min(100, Math.max(0, ((bslTarget - cp) / poolRange) * 100)).toFixed(1);
+        const rawProgress = isBear 
+            ? ((bslTarget - cp) / poolRange) * 100 
+            : ((cp - sslTarget) / poolRange) * 100;
+        const progressPct = Math.min(95, Math.max(8, rawProgress)).toFixed(1);
 
         if (cpiLivePrice) cpiLivePrice.innerText = "$" + cp.toFixed(2);
         if (cpiProgressText) {
-            cpiProgressText.innerHTML = `<strong style="color:var(--color-cyan);">${progressPct}%</strong> Delivered to SSL Target • <strong style="color:#fde047;">${sslDistPips} Pips Remaining</strong>`;
+            if (isBear) {
+                cpiProgressText.innerHTML = `<strong style="color:var(--color-cyan);">${progressPct}%</strong> Delivered to SSL Target • <strong style="color:#fde047;">${sslDistPips} Pips Remaining</strong>`;
+            } else {
+                cpiProgressText.innerHTML = `<strong style="color:var(--color-cyan);">${progressPct}%</strong> Delivered to BSL Target • <strong style="color:#fde047;">${bslDistPips} Pips Remaining</strong>`;
+            }
         }
         if (cpiProgressBar) {
             cpiProgressBar.style.width = `${progressPct}%`;
@@ -4942,12 +4949,42 @@ function computeRealtimeConfluence() {
             us10yLiveStateText.innerHTML = `Live State: <strong style="color:var(--color-red);">Bond Yields Crashing (${us10y.currentPrice.toFixed(2)}%)</strong>`;
         }
 
+        const htfAnchorMin = (activeTrade.entryPrice - 15).toFixed(2);
+        const htfAnchorMax = (activeTrade.entryPrice + 15).toFixed(2);
+        const mtf1hMin = (activeTrade.zoneMin - 2).toFixed(2);
+        const mtf1hMax = (activeTrade.zoneMax + 2).toFixed(2);
+        const mtf15mMin = activeTrade.zoneMin.toFixed(2);
+        const mtf15mMax = activeTrade.zoneMax.toFixed(2);
+        const mtf1mMin = (activeTrade.entryPrice - 0.50).toFixed(2);
+        const mtf1mMax = (activeTrade.entryPrice + 0.50).toFixed(2);
+        const bullChoch = (activeTrade.entryPrice + 1.50).toFixed(2);
+        const bullBos = activeTrade.tp1Price.toFixed(2);
+        const bullInval = activeTrade.slPrice.toFixed(2);
+
+        const osrHtfContext = document.getElementById("osrHtfContext");
+        const osrLiqSweep = document.getElementById("osrLiqSweep");
+        const osrMacroContext = document.getElementById("osrMacroContext");
+        const osrPinpointContext = document.getElementById("osrPinpointContext");
+
+        if (osrHtfContext) {
+            osrHtfContext.innerHTML = `4H Anchor ($${htfAnchorMin}–$${htfAnchorMax}) + 1H POI ($${mtf1hMin}–$${mtf1hMax}). Bias: Bullish Demand Accumulation.`;
+        }
+        if (osrLiqSweep) {
+            osrLiqSweep.innerHTML = `Whale SSL Swept below $${bullInval} ➔ Rejection confirmed ➔ Magnet drawing to BSL ($${activeTrade.tp1Price.toFixed(2)}).`;
+        }
+        if (osrMacroContext) {
+            osrMacroContext.innerHTML = `DXY active at ${dxy.currentPrice.toFixed(2)} + 10Y Yields cooling at ${us10y.currentPrice.toFixed(2)}%. Dollar momentum gives room for Gold upside expansion.`;
+        }
+        if (osrPinpointContext) {
+            osrPinpointContext.innerHTML = `15M Hammer Demand Wick ($${activeTrade.entryPrice.toFixed(2)}) ➔ 1M Pinpoint ($${activeTrade.entryPrice.toFixed(2)}) ➔ Sniper SL $${activeTrade.slPrice.toFixed(2)} (${activeTrade.riskPips} Pips).`;
+        }
+
         if (pillarSmcState) pillarSmcState.innerText = "🟢 HH & HL (Bullish Uptrend)";
-        if (pillarSmcVerdict) pillarSmcVerdict.innerHTML = "• Active: HH ($4,520) ➔ HL ($4,420 Defended)<br>• Invalidation: Agar 1H candle &lt;$4,400 close ho!";
-        if (pillarObFvgState) pillarObFvgState.innerText = "🎯 1M Pinpoint: $4,422.50";
-        if (pillarObFvgVerdict) pillarObFvgVerdict.innerText = "Impact: 🟢 Bullish (1H Demand ➔ 5M FVG ➔ 1M Trigger)";
+        if (pillarSmcVerdict) pillarSmcVerdict.innerHTML = `• Active: Demand ($${activeTrade.entryPrice.toFixed(2)}) ➔ Target ($${activeTrade.tp1Price.toFixed(2)})<br>• Invalidation: Agar 1H candle &lt;$${bullInval} close ho!`;
+        if (pillarObFvgState) pillarObFvgState.innerText = `🎯 1M Pinpoint: $${activeTrade.entryPrice.toFixed(2)}`;
+        if (pillarObFvgVerdict) pillarObFvgVerdict.innerText = `Impact: 🟢 Bullish (${activeTrade.reason || '1H Demand ➔ 5M FVG ➔ 1M Trigger'})`;
         if (pillarLiqState) pillarLiqState.innerText = "SSL Swept ➔ Hunting BSL";
-        if (pillarLiqVerdict) pillarLiqVerdict.innerText = "Impact: 🟢 Target: $4,520 Equal Highs";
+        if (pillarLiqVerdict) pillarLiqVerdict.innerText = `Impact: 🟢 Target: $${activeTrade.tp1Price.toFixed(2)} BSL Liquidity`;
         updateOmniNewsPillar(false);
         if (omniNewsProtocol) omniNewsProtocol.innerText = "🟡 FinancialJuice Wire: Yellow Accumulation + Dovish Expansion";
         if (pillarAstroState) pillarAstroState.innerText = "New Moon Expansion Cycle";
@@ -4962,37 +4999,37 @@ function computeRealtimeConfluence() {
             structStatus.className = "sib-status text-up";
             structStatus.innerText = "▲ HH & HL CONFIRMED (Bullish Order Flow)";
         }
-        if (structDesc) structDesc.innerText = "Market ne last LH ($4,480) tod kar Bullish CHoCH de diya hai. Ab market Higher Highs aur Higher Lows bana rahi hai.";
+        if (structDesc) structDesc.innerText = `Market ne support defend karke Bullish MSS de diya hai. Target: $${bullBos}.`;
         if (shiftStatus) {
             shiftStatus.className = "sib-status text-up";
-            shiftStatus.innerText = "🟢 BULLISH CHoCH & BOS CONFIRMED ($4,480 Breached)";
+            shiftStatus.innerText = `🟢 BULLISH CHoCH & BOS CONFIRMED ($${bullChoch} Triggered)`;
         }
-        if (shiftDesc) shiftDesc.innerText = "Change of Character complete! Sellers liquidate ho gaye hain, ab har dip par aggressive buy chaleingi.";
+        if (shiftDesc) shiftDesc.innerText = "Change of Character complete! Sellers absorb ho gaye hain, dips par institutional buy support active hai.";
         if (obStatus) {
             obStatus.className = "sib-status text-up";
-            obStatus.innerText = "🟢 1H BULLISH DEMAND OB ($4,418 – $4,430)";
+            obStatus.innerText = `🟢 1H BULLISH DEMAND OB ($${mtf1hMin} – $${mtf1hMax})`;
         }
-        if (obDesc) obDesc.innerText = "Neeche se Demand OB origin block successfully held! Buyers defend kar rahe hain.";
+        if (obDesc) obDesc.innerText = "Demand OB origin block successfully held! Buyers defend kar rahe hain.";
         if (fvgStatus) {
             fvgStatus.className = "sib-status text-cyan";
-            fvgStatus.innerText = "🧲 5M DISCOUNT FVG: $4,421.50 – $4,424.50";
+            fvgStatus.innerText = `🧲 5M DISCOUNT FVG: $${mtf15mMin} – $${mtf15mMax}`;
         }
         if (fvgDesc) fvgDesc.innerText = "Bullish imbalance magnet. Deep discount pullbacks par buy entries sab se safe hain.";
-        if (smcTlStatus) smcTlStatus.innerText = "📐 ASCENDING SUPPORT TRENDLINE INTERSECTS AT $4,422.50 (DEMAND OB CONFLUENCE)";
-        if (smcTlDesc) smcTlDesc.innerHTML = "<strong>Bullish Trendline Synergy:</strong> Ascending support trendline Demand OB ($4,420–$4,428) ke sath perfectly align ho kar buyers ko structural dynamic floor provide kar rahi hai!";
+        if (smcTlStatus) smcTlStatus.innerText = `📐 ASCENDING SUPPORT INTERSECTS AT $${activeTrade.entryPrice.toFixed(2)} (DEMAND CONFLUENCE)`;
+        if (smcTlDesc) smcTlDesc.innerHTML = `<strong>Bullish Trendline Synergy:</strong> Ascending support Demand OB ($${mtf15mMin}–$${mtf15mMax}) ke sath align ho kar buyers ko dynamic floor provide kar rahi hai!`;
 
         // Price Action Naked Radar Updates
-        if (omniPaTrigger) omniPaTrigger.innerText = "15M Hammer Pinbar ($4,420.00 Absorption Wick)";
+        if (omniPaTrigger) omniPaTrigger.innerText = `15M Hammer Pinbar ($${activeTrade.entryPrice.toFixed(2)} Demand Wick)`;
         if (pillarPaState) {
             pillarPaState.className = "opc-state text-up";
             pillarPaState.innerText = "15M Hammer Demand Pinbar";
         }
         if (pillarPaVerdict) {
-            pillarPaVerdict.innerHTML = "Impact: 🟢 82% Lower Wick Absorption Inflow • $4,424 Retest";
+            pillarPaVerdict.innerHTML = `Impact: 🟢 82% Lower Wick Absorption • $${activeTrade.entryPrice.toFixed(2)} Retest`;
         }
         if (paCandleFormation) {
             paCandleFormation.className = "pa-box-val text-up";
-            paCandleFormation.innerText = "15M Hammer / Bullish Demand Pinbar ($4,420.00)";
+            paCandleFormation.innerText = `15M Hammer / Bullish Demand Pinbar ($${activeTrade.entryPrice.toFixed(2)})`;
         }
         if (paWickPressure) {
             paWickPressure.className = "pa-box-val text-green";
@@ -5000,39 +5037,39 @@ function computeRealtimeConfluence() {
         }
         if (paSrFlip) {
             paSrFlip.className = "pa-box-val text-cyan";
-            paSrFlip.innerText = "$4,424.00 Broken Resistance ➔ Fresh Support Retest";
+            paSrFlip.innerText = `$${bullChoch} Broken Resistance ➔ Fresh Support Retest`;
         }
 
         // MTF Refinement matrix cards (4H -> 1H -> 15M -> 1M)
-        if (omni4hAnchor) omni4hAnchor.innerText = "$4,410.00 – $4,435.00";
-        if (mtf4hZone) mtf4hZone.innerText = "$4,410.00 – $4,435.00";
+        if (omni4hAnchor) omni4hAnchor.innerText = `$${htfAnchorMin} – $${htfAnchorMax}`;
+        if (mtf4hZone) mtf4hZone.innerText = `$${htfAnchorMin} – $${htfAnchorMax}`;
         if (mtf4hDetail) mtf4hDetail.innerText = "Macro institutional demand pool. Daily/Weekly bullish bias ke sath aligned Double PD Array.";
         if (mtf4hArrayTag) mtf4hArrayTag.innerText = "🏛️ Double PD Array";
         if (mtf4hBiasTag) mtf4hBiasTag.innerText = "📈 HTF Bias: Bullish";
 
-        if (mtf1hZone) mtf1hZone.innerText = "$4,418.00 – $4,430.00";
-        if (mtf1hDetail) mtf1hDetail.innerText = "Neeche se Demand OB origin + displacement imbalance. Macro buyer footprint.";
-        if (mtf1hBosTag) mtf1hBosTag.innerText = "🚀 1H BOS: $4,480 Confirmed";
-        if (mtf1hChochTag) mtf1hChochTag.innerText = "🛡️ Inval: Below $4,400";
+        if (mtf1hZone) mtf1hZone.innerText = `$${mtf1hMin} – $${mtf1hMax}`;
+        if (mtf1hDetail) mtf1hDetail.innerText = "Demand OB origin + displacement imbalance. Macro buyer footprint.";
+        if (mtf1hBosTag) mtf1hBosTag.innerText = `🚀 1H BOS: $${bullBos} Target`;
+        if (mtf1hChochTag) mtf1hChochTag.innerText = `🛡️ Inval: Below $${bullInval}`;
 
-        if (mtf15mZone) mtf15mZone.innerText = "$4,420.00 – $4,425.00";
+        if (mtf15mZone) mtf15mZone.innerText = `$${mtf15mMin} – $${mtf15mMax}`;
         if (mtf15mDetail) mtf15mDetail.innerText = "15M Bullish Displacement Imbalance. Weak retail resistance POIs swept.";
         if (mtf15mDisplacementTag) mtf15mDisplacementTag.innerText = "⚡ 15M Displacement";
         if (mtf15mTrapTag) mtf15mTrapTag.innerText = "🛡️ Trapping POIs Filtered";
 
-        if (mtf1mZone) mtf1mZone.innerText = "$4,422.20 – $4,423.00";
-        if (mtf1mDetail) mtf1mDetail.innerHTML = "<strong>Exact Trigger: $4,422.50</strong> • Sniper SL: $4,420.20 (Only 23 pips risk!) • R:R: 1:25!";
-        if (mtf1mChochTag) mtf1mChochTag.innerText = "🎯 1M CHoCH: $4,424.00";
-        if (mtf1mBosTag) mtf1mBosTag.innerText = "⚡ 1M BOS: $4,426.50";
+        if (mtf1mZone) mtf1mZone.innerText = `$${mtf1mMin} – $${mtf1mMax}`;
+        if (mtf1mDetail) mtf1mDetail.innerHTML = `<strong>Exact Trigger: $${activeTrade.entryPrice.toFixed(2)}</strong> • Sniper SL: $${activeTrade.slPrice.toFixed(2)} (${activeTrade.riskPips} Pips Risk) • R:R: 1:3 ➔ 1:10!`;
+        if (mtf1mChochTag) mtf1mChochTag.innerText = `🎯 1M CHoCH: $${bullChoch}`;
+        if (mtf1mBosTag) mtf1mBosTag.innerText = `⚡ 1M BOS: $${bullBos}`;
 
         // BOS & CHOCH Structural Flow Tracker
-        if (mst1hBos) mst1hBos.innerHTML = "🟢 $4,480.00 CONFIRMED";
-        if (mst1hChoch) mst1hChoch.innerHTML = "🛡️ $4,400.00 LEVEL";
-        if (mst1mChoch) mst1mChoch.innerHTML = "⚡ $4,424.00 BULLISH MSS";
-        if (mst1mBos) mst1mBos.innerHTML = "🚀 $4,426.50 EXPANSION";
+        if (mst1hBos) mst1hBos.innerHTML = `🟢 $${bullBos} TARGET`;
+        if (mst1hChoch) mst1hChoch.innerHTML = `🛡️ $${bullInval} FLOOR`;
+        if (mst1mChoch) mst1mChoch.innerHTML = `⚡ $${bullChoch} BULLISH MSS`;
+        if (mst1mBos) mst1mBos.innerHTML = `🚀 $${activeTrade.entryPrice.toFixed(2)} EXPANSION`;
 
         if (liveSit) {
-            liveSit.innerHTML = `<span style="color:var(--color-green);">🟢 CHoCH CONFIRMED: BUY PULLBACK AT $4,422.50 1M PINPOINT</span>`;
+            liveSit.innerHTML = `<span style="color:var(--color-green);">🟢 CHoCH CONFIRMED: BUY PULLBACK AT $${activeTrade.entryPrice.toFixed(2)} 1M PINPOINT</span>`;
         }
 
         if (mvcCard) mvcCard.style.borderLeftColor = "var(--color-green)";
@@ -5044,22 +5081,22 @@ function computeRealtimeConfluence() {
             mvcAction.style.color = "var(--color-green)";
             mvcAction.style.background = "rgba(0, 245, 155, 0.08)";
             mvcAction.style.borderColor = "rgba(0, 245, 155, 0.25)";
-            mvcAction.innerText = "▲ BUY: $4,422.50 • 🛑 SL: $4,420.20 (23 Pips) • 🎯 TP1: $4,429.40 ➔ TP2: $4,445.50 (1:10 Max) 🟢";
+            mvcAction.innerText = `▲ BUY: $${activeTrade.entryPrice.toFixed(2)} • 🛑 SL: $${activeTrade.slPrice.toFixed(2)} (${activeTrade.riskPips} Pips) • 🎯 TP1: $${activeTrade.tp1Price.toFixed(2)} ➔ TP2: $${activeTrade.tp2Price.toFixed(2)} 🟢`;
         }
-        if (mvc1h) mvc1h.innerText = "$4,418 – $4,430";
-        if (mvc1hBos) mvc1hBos.innerText = "$4,480.00";
-        if (mvcEntry) mvcEntry.innerText = "$4,421.50 – $4,424.50";
-        if (mvcPinpoint) mvcPinpoint.innerText = "$4,422.50";
-        if (mvc1mChoch) mvc1mChoch.innerText = "$4,424.00";
-        if (mvcSl) mvcSl.innerText = "$4,420.20 (23 pips)";
+        if (mvc1h) mvc1h.innerText = `$${mtf1hMin} – $${mtf1hMax}`;
+        if (mvc1hBos) mvc1hBos.innerText = `$${bullBos}`;
+        if (mvcEntry) mvcEntry.innerText = `$${mtf15mMin} – $${mtf15mMax}`;
+        if (mvcPinpoint) mvcPinpoint.innerText = `$${activeTrade.entryPrice.toFixed(2)}`;
+        if (mvc1mChoch) mvc1mChoch.innerText = `$${bullChoch}`;
+        if (mvcSl) mvcSl.innerText = `$${activeTrade.slPrice.toFixed(2)} (${activeTrade.riskPips} pips)`;
         const mvcRrRatio = document.getElementById("mvcRrRatio");
         if (mvcRrRatio) mvcRrRatio.innerText = "1:3 Scalp ➔ 1:10 Max Runner";
         const mvcTp1 = document.getElementById("mvcTp1");
-        if (mvcTp1) mvcTp1.innerText = "$4,429.40 (1:3)";
+        if (mvcTp1) mvcTp1.innerText = `$${activeTrade.tp1Price.toFixed(2)} (1:2 Scalp)`;
         if (mvcInval) {
-            mvcInval.innerHTML = "<strong>🛡️ KAB CANCEL HOGA? (BULLISH INVALIDATION):</strong><br>Agar price $4,400 ke Demand OB ke neeche 1H candle close kar de, to bullish expansion cancel ho jayegi!";
+            mvcInval.innerHTML = `<strong>🛡️ KAB CANCEL HOGA? (BULLISH INVALIDATION):</strong><br>Agar price $${bullInval} ke Demand OB ke neeche 1H candle close kar de, to bullish expansion cancel ho jayegi!`;
         }
-        if (liqTargetBadge) liqTargetBadge.innerText = "🎯 TARGET: BSL ($4,520)";
+        if (liqTargetBadge) liqTargetBadge.innerText = `🎯 TARGET: BSL ($${activeTrade.tp1Price.toFixed(2)})`;
     }
 
     // DUAL-LEVEL 5M DISPLACEMENT ENGINE (Cockpit Strip & Module 04 Naked PA Box 4)
