@@ -5477,11 +5477,9 @@ function getUnifiedRealTrades() {
                     if (t.id.startsWith("auto_scalp_") || t.id.startsWith("tab2_live_")) {
                         continue;
                     }
-                    // Exclude runaway pipeline sequence spam
+                    // Allow all institutional sequence trades to appear in journal
                     const seqMatch = t.id.match(/^real_trade_(\d+)$/);
-                    if (seqMatch && parseInt(seqMatch[1], 10) > 10) {
-                        continue;
-                    }
+
                     // Prevent duplicate trade cards in journal
                     if (seenIds.has(t.id)) continue;
                     seenIds.add(t.id);
@@ -6430,6 +6428,37 @@ function autoDetectAndSyncPipelineToJournal() {
                     proof: `🛑 Stop Loss Hit: Price crossed $${pipeTrade.slPrice.toFixed(2)}. Micro-risk saved account.`,
                     winReason: pipeTrade.lossDiagnosis || "Stop Loss hit.",
                     disciplineRule: pipeTrade.preventionRule || "Strict risk preserved capital.",
+                    timestamp: Date.now(),
+                    timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                };
+                trades.unshift(existing);
+                updated = true;
+            }
+        } else if (pipeTrade.status === "MISSED") {
+            if (!existing) {
+                existing = {
+                    id: tradeId,
+                    category: "SETUP",
+                    title: pipeTrade.title,
+                    date: tradeDateStr,
+                    asset: `Gold (XAU/USD) ${pipeTrade.isBear ? "SELL" : "BUY"}`,
+                    session: pipeTrade.session || "INTRADAY SETUP",
+                    direction: pipeTrade.isBear ? "SELL" : "BUY",
+                    entry: `$${pipeTrade.entryPrice.toFixed(2)}`,
+                    sl: `$${pipeTrade.slPrice.toFixed(2)} (${pipeTrade.riskPips || 45} Pips Risk)`,
+                    tpTarget: `$${pipeTrade.tp1Price.toFixed(2)}`,
+                    exitPrice: "No Fill ($0.00 Risk)",
+                    status: "MISSED",
+                    winProb: pipeTrade.winProb || 85,
+                    probGrade: "MISSED",
+                    pips: 0,
+                    riskUsd: 0,
+                    pnlUsd: 0.00,
+                    rMultiple: 0.0,
+                    confluence: pipeTrade.reason || "Price bypassed entry level",
+                    proof: `⚡ MISSED / RAN AWAY: Market entry level par aaye baghair aage nikal gayi. Capital 100% Protected ($0.00 Risk).`,
+                    winReason: pipeTrade.missedReason || "Market moved past entry level without filling limit order.",
+                    disciplineRule: "Unfilled trade par FOMO chase nahi ki, agle setup ka wait kiya.",
                     timestamp: Date.now(),
                     timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
                 };
