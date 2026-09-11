@@ -4573,78 +4573,28 @@ function computeRealtimeConfluence() {
     if (cpiLivePrice) cpiLivePrice.innerText = "$" + cp.toFixed(2);
     if (omniLivePrice) omniLivePrice.innerText = "$" + cp.toFixed(2);
 
-    if (isBear) {
+    const activeTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX] || DAY_TRADE_PIPELINE[12] || DAY_TRADE_PIPELINE[0];
+    const isTradeBear = activeTrade ? activeTrade.isBear : true;
+
+    if (isTradeBear) {
         if (omniScoreText) omniScoreText.innerHTML = "🔴 89% BEARISH CONFLUENCE (SELL BIAS)";
         if (omniScorePill) {
             omniScorePill.style.background = "rgba(255, 59, 92, 0.15)";
             omniScorePill.style.borderColor = "var(--color-red)";
         }
-
-        const pipsProfit = Math.round((4446.50 - cp) * 10);
-        if (cp <= 4423.50) {
-            if (omniQna) {
-                omniQna.innerHTML = `👑 <strong>AI FINAL FAISLA: 1:10 TARGET SMASHED (+${pipsProfit} PIPS PROFIT)!</strong> Short trade ne 1:10 Target ($4,423.50) hit kar diya hai aur ab agla target <strong>$4,380.00 Macro SSL</strong> hai. Stop Loss ko Breakeven ($4,446.50) par lock rakhein. <strong>Abhi bottom par fresh SELL na karein, aur BUY bilkul na karein (Trap)!</strong>`;
-                omniQna.style.color = "var(--color-green)";
-            }
-            if (omniActionBadge) {
-                omniActionBadge.innerHTML = `👑 1:10 TARGET HIT ($4,423.50) • +${pipsProfit} PIPS PROFIT • EXPANDING TO $4,380`;
-                omniActionBadge.style.color = "#fff";
-                omniActionBadge.style.background = "rgba(0, 245, 155, 0.25)";
-                omniActionBadge.style.borderColor = "var(--color-green)";
-            }
-            if (omniFinalTitle) {
-                omniFinalTitle.innerText = `👑 1:10 FULL TARGET SMASHED (+${pipsProfit} Pips Profit) • Target $4,380 SSL • Trail SL 🟢`;
-                omniFinalTitle.style.color = "var(--color-green)";
-            }
-        } else if (cp <= 4440.00) {
-            if (omniQna) {
-                omniQna.innerHTML = `🚀 <strong>AI FINAL FAISLA: SHORT RUNNING IN PROFIT (+${pipsProfit} Pips)!</strong> TP1 Smashed. <strong>DO NOT BUY</strong> (100% Buy Trap). Naye trade ke liye 5M pullback ($4,435+) ka wait karein.`;
-                omniQna.style.color = "var(--color-green)";
-            }
-            if (omniActionBadge) {
-                omniActionBadge.innerHTML = `🚀 SHORT FLOATING IN PROFIT (+${pipsProfit} Pips) • TP1 HIT ✅ • TARGETING $4,423.50`;
-                omniActionBadge.style.color = "#fff";
-                omniActionBadge.style.background = "rgba(56, 189, 248, 0.2)";
-                omniActionBadge.style.borderColor = "#0284c7";
-            }
-            if (omniFinalTitle) {
-                omniFinalTitle.innerText = `🚀 SELL EXPANSION IN PROFIT (+${pipsProfit} Pips) • TP1 Hit • Target $4,423.50 🔴`;
-                omniFinalTitle.style.color = "var(--color-cyan)";
-            }
-        } else if (cp >= 4444.00 && cp <= 4448.00) {
-            if (omniQna) {
-                omniQna.innerHTML = "🎯 <strong>AI FINAL FAISLA: SNIPER ENTRY TRIGGER LIVE!</strong> 1M Pinpoint $4,446.50 tap ho raha hai. SL $4,448.80 (23 Pips). Sell now, do not buy!";
-                omniQna.style.color = "var(--color-red)";
-            }
-            if (omniActionBadge) {
-                omniActionBadge.innerHTML = "▼ SELL: $4,446.50 • 🛑 SL: $4,448.80 (23 Pips) • 🎯 TP1: $4,439.60 ➔ TP2: $4,423.50 (1:10 Max)";
-                omniActionBadge.style.color = "#fff";
-                omniActionBadge.style.background = "rgba(255, 59, 92, 0.2)";
-                omniActionBadge.style.borderColor = "var(--color-red)";
-            }
-            if (omniFinalTitle) {
-                omniFinalTitle.innerText = "▼ SELL @ $4,446.50 • 🛑 SL: $4,448.80 • 🎯 TP1: $4,439.60 (1:3) • 🚀 TP2: $4,423.50 (1:10 Max) 🔴";
-                omniFinalTitle.style.color = "var(--color-red)";
-            }
-        } else {
-            if (omniQna) {
-                omniQna.innerHTML = "🛑 <strong>AI FINAL FAISLA: ABHI BUY BILKUL NAHI KARNA! (100% BUY TRAP - DO NOT BUY)</strong>";
-                omniQna.style.color = "var(--color-red)";
-            }
-            if (omniActionBadge) {
-                omniActionBadge.innerHTML = "▼ SELL PULLBACKS: $4,446.50 • 🛑 SL: $4,448.80 • 🎯 TP: $4,423.50 (1:10 Max)";
-                omniActionBadge.style.color = "#fff";
-                omniActionBadge.style.background = "rgba(255, 59, 92, 0.2)";
-                omniActionBadge.style.borderColor = "var(--color-red)";
-            }
-            const activeTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX] || DAY_TRADE_PIPELINE[1];
-            if (omniFinalTitle) {
-                omniFinalTitle.innerText = `${activeTrade.action} @ $${activeTrade.entryPrice.toFixed(2)} • 🛑 SL: $${activeTrade.slPrice.toFixed(2)} • 🎯 TP2: $${activeTrade.tp2Price.toFixed(2)} 🔴`;
-                omniFinalTitle.style.color = "var(--color-red)";
-            }
+        if (omniQna) {
+            const dist = Math.abs(Math.round((activeTrade.entryPrice - cp) * 10));
+            omniQna.innerHTML = `🔴 <strong>AI FAISLA (TRADE #${activeTrade.seq}): SELL CONFLUENCE VALIDATED.</strong> Supply Retest @ $${activeTrade.entryPrice.toFixed(2)} (${dist}p door) • SL: $${activeTrade.slPrice.toFixed(2)} • Target: $${activeTrade.tp1Price.toFixed(2)} SSL.`;
+            omniQna.style.color = "var(--color-red)";
+        }
+        if (omniActionBadge) {
+            omniActionBadge.innerHTML = `▼ SELL SETUP #${activeTrade.seq}: $${activeTrade.entryPrice.toFixed(2)} • 🛑 SL: $${activeTrade.slPrice.toFixed(2)} • 🎯 TP: $${activeTrade.tp1Price.toFixed(2)}`;
+            omniActionBadge.style.color = "#fff";
+            omniActionBadge.style.background = "rgba(255, 59, 92, 0.2)";
+            omniActionBadge.style.borderColor = "var(--color-red)";
         }
 
-        const activeTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX] || DAY_TRADE_PIPELINE[1];
+
         if (omni1hMacro) omni1hMacro.innerText = "$4,420.00 – $4,435.00";
         const omni1hBos = document.getElementById("omni1hBos");
         if (omni1hBos) omni1hBos.innerText = "$4,435.00 (Broken 🔴)";
