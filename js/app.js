@@ -4068,11 +4068,18 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 trapValColor = "#fde68a";
                 insightText = "Market ne entry fill kiye baghair tezi pakri. Retailers aisi soorat mein bhaagti market ko chase karte hain aur top/bottom par phans jate hain. Hum patient rehte hain.";
             } else if (isTradeBear) {
-                // Bearish Setup
-                if (cp >= entryPrice - 1.0) {
-                    // Near entry / resistance
-                    sentimentPct = 78;
-                    sentimentTagText = "FOMO GREED (78%)";
+                // Bearish Setup: Dynamic Real-time Market Psychology Interpolation
+                const span = Math.max(2, entryPrice - tp1Price);
+                const drop = entryPrice - cp; // Positive when dropping towards TP
+                const progressRatio = drop / span;
+                
+                // When price is at entry ($4,364.50) or above -> Breakout buyers are trapped in high greed (75% to 88%)
+                // As price flushes down towards TP1 ($4,352.00) -> Panic selling kicks in, dropping towards 15% - 25%
+                const calculatedPct = Math.round(78 - (progressRatio * 56));
+                sentimentPct = Math.max(12, Math.min(92, calculatedPct));
+
+                if (sentimentPct >= 65) {
+                    sentimentTagText = `FOMO GREED (${sentimentPct}%)`;
                     sentimentDesc = "🔥 Retail Breakout Buyers Trapped";
                     meterBg = "linear-gradient(90deg, #ef4444, #f87171)";
                     regimeText = "🏛️ SMART MONEY DISTRIBUTION";
@@ -4084,10 +4091,21 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     trapValText = `Breakout Buyers Phans Gaye ($${entryPrice.toFixed(2)} Resistance)`;
                     trapValColor = "#fca5a5";
                     insightText = `Retailers green candles dekh kar resistance breakout par buy kar rahe hain. Institutions yahan unke buy orders par massive sell liquidity offload kar rahe hain — humein Sell Retest lena hai!`;
+                } else if (sentimentPct >= 38) {
+                    sentimentTagText = `BEARISH MOMENTUM (${sentimentPct}%)`;
+                    sentimentDesc = "⚡ Smart Money Downside Expansion";
+                    meterBg = "linear-gradient(90deg, #f59e0b, #38bdf8)";
+                    regimeText = "⚡ LIQUIDITY DELIVERY (SSL HUNT)";
+                    regimeBg = "rgba(56,189,248,0.2)";
+                    regimeColor = "#bae6fd";
+                    regimeBorder = "rgba(56,189,248,0.4)";
+                    trapStatusText = "🎣 EARLY RUNNER";
+                    trapStatusColor = "#38bdf8";
+                    trapValText = `Flowing Towards TP1 ($${tp1Price.toFixed(2)})`;
+                    trapValColor = "#bae6fd";
+                    insightText = `Smart money selling pressure barh chuki hai. Market target ki taraf continuous expansion kar rahi hai.`;
                 } else {
-                    // In-flight falling towards TP
-                    sentimentPct = 26;
-                    sentimentTagText = "RETAIL PANIC (26%)";
+                    sentimentTagText = `RETAIL PANIC (${sentimentPct}%)`;
                     sentimentDesc = "🔻 Late Retail Chasers Selling Low";
                     meterBg = "linear-gradient(90deg, #38bdf8, #818cf8)";
                     regimeText = "⚡ DOWNSIDE DISPLACEMENT";
@@ -4101,11 +4119,16 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     insightText = `Market gir chuki hai, ab aam traders darr k maare neechay sell kar rahe hain jabki Smart Money apne TP levels ($${tp1Price.toFixed(2)}) par munafa book karne ki tayari mein hai.`;
                 }
             } else {
-                // Bullish Setup
-                if (cp <= entryPrice + 1.0) {
-                    // Near entry / support
-                    sentimentPct = 22;
-                    sentimentTagText = "EXTREME FEAR (22%)";
+                // Bullish Setup: Dynamic Real-time Market Psychology Interpolation
+                const span = Math.max(2, tp1Price - entryPrice);
+                const gain = cp - entryPrice;
+                const progressRatio = gain / span;
+                
+                const calculatedPct = Math.round(22 + (progressRatio * 58));
+                sentimentPct = Math.max(12, Math.min(92, calculatedPct));
+
+                if (sentimentPct <= 35) {
+                    sentimentTagText = `EXTREME FEAR (${sentimentPct}%)`;
                     sentimentDesc = "😨 Retail Panic Selling at Bottom";
                     meterBg = "linear-gradient(90deg, #38bdf8, #818cf8)";
                     regimeText = "🏛️ SMART MONEY ACCUMULATION";
@@ -4117,10 +4140,21 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     trapValText = `Breakdown Sellers Phans Gaye ($${entryPrice.toFixed(2)} Support)`;
                     trapValColor = "#fca5a5";
                     insightText = `Retailers red dump candles dekh kar support todne par sell kar rahe hain. Smart Money unka Stop Loss kha k discount price par buy orders absorb kar raha hai — Retail k ulta Buy karein!`;
+                } else if (sentimentPct <= 62) {
+                    sentimentTagText = `BULLISH RECOVERY (${sentimentPct}%)`;
+                    sentimentDesc = "⚡ Smart Money Upside Push";
+                    meterBg = "linear-gradient(90deg, #38bdf8, #10b981)";
+                    regimeText = "⚡ DEMAND EXPANSION";
+                    regimeBg = "rgba(0,245,155,0.2)";
+                    regimeColor = "#6ee7b7";
+                    regimeBorder = "rgba(0,245,155,0.4)";
+                    trapStatusText = "🎣 ACCUMULATION DELIVERING";
+                    trapStatusColor = "#00f59b";
+                    trapValText = `Pushing Towards TP1 ($${tp1Price.toFixed(2)})`;
+                    trapValColor = "#6ee7b7";
+                    insightText = `Demand zone se strong buying volume enter ho chuka hai. Price smooth targets ki taraf ja rahi hai.`;
                 } else {
-                    // In-flight rising towards TP
-                    sentimentPct = 82;
-                    sentimentTagText = "GREED MOMENTUM (82%)";
+                    sentimentTagText = `GREED MOMENTUM (${sentimentPct}%)`;
                     sentimentDesc = "🚀 Retail FOMO Chasing the Rally";
                     meterBg = "linear-gradient(90deg, #10b981, #00f59b)";
                     regimeText = "⚡ UPSIDE DISPLACEMENT";
