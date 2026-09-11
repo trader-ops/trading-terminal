@@ -2493,8 +2493,148 @@ const DAY_TRADE_PIPELINE = [
         winProb: 89,
         probGrade: "A+ PRIME",
         summary: "Active Live Setup: Retest of $4,364.50 resistance targeting $4,352 and $4,342."
+    },
+    {
+        id: "trade_14",
+        seq: 14,
+        title: "TRADE #14: $4,372.50 BEARISH BREAKER SELL",
+        badge: "⏳ QUEUED SETUP",
+        action: "▼ STRONG SELL (SHORT)",
+        isBear: true,
+        entryPrice: 4372.50,
+        slPrice: 4377.00,
+        riskPips: 45,
+        riskDollars: 4.50,
+        tp1Price: 4358.00,
+        tp1Pips: 145,
+        tp1Gain: 14.50,
+        tp2Price: 4345.00,
+        tp2Pips: 275,
+        tp2Gain: 27.50,
+        tp3Price: 4330.00,
+        tp3Pips: 425,
+        tp3Gain: 42.50,
+        tp4Price: 4310.00,
+        tp4Pips: 625,
+        tp4Gain: 62.50,
+        zoneMin: 4371.00,
+        zoneMax: 4374.00,
+        session: "15M BREAKER RETEST",
+        reason: "15M Broken Support Flip to Breaker Resistance",
+        subText: "Above $4,377.00 SL • 45 Pips Risk (-$4.50)",
+        status: "QUEUED",
+        winProb: 91,
+        probGrade: "A INSTITUTIONAL",
+        summary: "Queued Setup: Retest of $4,372.50 Breaker Supply targeting $4,358 & $4,345."
+    },
+    {
+        id: "trade_15",
+        seq: 15,
+        title: "TRADE #15: $4,345.00 LIQUIDITY ABSORPTION BUY",
+        badge: "⏳ QUEUED SETUP",
+        action: "▲ QUICK BUY (DEMAND BOUNCE)",
+        isBear: false,
+        entryPrice: 4345.00,
+        slPrice: 4340.50,
+        riskPips: 45,
+        riskDollars: 4.50,
+        tp1Price: 4358.00,
+        tp1Pips: 130,
+        tp1Gain: 13.00,
+        tp2Price: 4370.00,
+        tp2Pips: 250,
+        tp2Gain: 25.00,
+        tp3Price: 4385.00,
+        tp3Pips: 400,
+        tp3Gain: 40.00,
+        tp4Price: 4400.00,
+        tp4Pips: 550,
+        tp4Gain: 55.00,
+        zoneMin: 4344.00,
+        zoneMax: 4346.50,
+        session: "DISCOUNT DEMAND SWEEP",
+        reason: "Day Low Sell-Side Liquidity (SSL) Sweep & Reversal",
+        subText: "Below $4,340.50 SL • 45 Pips Risk (-$4.50)",
+        status: "QUEUED",
+        winProb: 88,
+        probGrade: "A- DEMAND BOUNCE",
+        summary: "Queued Setup: Institutional discount SSL sweep at $4,345 targeting $4,358 bounce."
+    },
+    {
+        id: "trade_16",
+        seq: 16,
+        title: "TRADE #16: $4,368.00 15M SUPPLY RETEST SELL",
+        badge: "⏳ QUEUED SETUP",
+        action: "▼ STRONG SELL (SHORT)",
+        isBear: true,
+        entryPrice: 4368.00,
+        slPrice: 4372.50,
+        riskPips: 45,
+        riskDollars: 4.50,
+        tp1Price: 4354.00,
+        tp1Pips: 140,
+        tp1Gain: 14.00,
+        tp2Price: 4342.00,
+        tp2Pips: 260,
+        tp2Gain: 26.00,
+        tp3Price: 4325.00,
+        tp3Pips: 430,
+        tp3Gain: 43.00,
+        tp4Price: 4300.00,
+        tp4Pips: 680,
+        tp4Gain: 68.00,
+        zoneMin: 4367.00,
+        zoneMax: 4369.50,
+        session: "15M SUPPLY RE-TEST",
+        reason: "15M Bearish Fair Value Gap & Supply Continuation",
+        subText: "Above $4,372.50 SL • 45 Pips Risk (-$4.50)",
+        status: "QUEUED",
+        winProb: 92,
+        probGrade: "A+ PRIME",
+        summary: "Queued Setup: Retest of $4,368 supply targeting $4,354 & $4,342."
     }
 ];
+
+const PIPELINE_PERSIST_KEY = "trading_terminal_pipeline_state_v35";
+
+function savePipelinePersistence() {
+    try {
+        const state = {
+            currentIndex: CURRENT_PIPELINE_INDEX,
+            statuses: DAY_TRADE_PIPELINE.map(t => ({
+                id: t.id,
+                status: t.status,
+                badge: t.badge,
+                isFilled: !!t.isFilled,
+                completedAt: t.completedAt
+            }))
+        };
+        localStorage.setItem(PIPELINE_PERSIST_KEY, JSON.stringify(state));
+    } catch(e) {}
+}
+
+function restorePipelinePersistence() {
+    try {
+        const raw = localStorage.getItem(PIPELINE_PERSIST_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.statuses)) {
+                parsed.statuses.forEach(s => {
+                    const found = DAY_TRADE_PIPELINE.find(t => t.id === s.id);
+                    if (found) {
+                        found.status = s.status;
+                        if (s.badge) found.badge = s.badge;
+                        found.isFilled = s.isFilled;
+                        if (s.completedAt) found.completedAt = s.completedAt;
+                    }
+                });
+                if (typeof parsed.currentIndex === "number" && DAY_TRADE_PIPELINE[parsed.currentIndex]) {
+                    CURRENT_PIPELINE_INDEX = parsed.currentIndex;
+                }
+            }
+        }
+    } catch(e) {}
+}
 
 function isPipelineTradeActiveOrQueued(t) {
     return t && t.status !== "DONE" && t.status !== "STOPPED" && t.status !== "MISSED" && t.status !== "INVALIDATED";
@@ -2502,8 +2642,9 @@ function isPipelineTradeActiveOrQueued(t) {
 window.isPipelineTradeActiveOrQueued = isPipelineTradeActiveOrQueued;
 
 CURRENT_PIPELINE_INDEX = 12; // Trade #13 is ACTIVE
+restorePipelinePersistence();
 AUTO_SHIFT_TRADES_ENABLED = true;
-let nextGeneratedTradeSeq = 14;
+let nextGeneratedTradeSeq = 17;
 
 // AUTO-REPLENISHMENT ENGINE: Generates fresh setups so queue never runs empty
 function replenishPipelineTradesIfNeeded(cp) {
@@ -3132,22 +3273,22 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                             t.fillTime = new Date().toLocaleTimeString();
                             if (typeof playEntryChime === "function") playEntryChime();
                         }
-                    } else {
                         // If price ran away or blew past without ever touching entry:
-                        const isTargetReachedWithoutEntry = t.isBear ? (cp <= t.tp1Price) : (cp >= t.tp1Price);
-                        const isBlownPastWithoutEntry = t.isBear ? (cp >= (t.slPrice + 2.00)) : (cp <= (t.slPrice - 2.00));
+                        const isTargetReachedWithoutEntry = t.isBear ? (cp <= (t.tp2Price || (t.entryPrice - 15.00))) : (cp >= (t.tp2Price || (t.entryPrice + 15.00)));
+                        const isBlownPastWithoutEntry = t.isBear ? (cp >= (t.slPrice + 4.00)) : (cp <= (t.slPrice - 4.00));
 
                         if (isTargetReachedWithoutEntry || isBlownPastWithoutEntry) {
                             t.status = "MISSED";
                             t.badge = "⚡ MISSED: RUNAWAY MOVE (NO FILL)";
                             t.securedPips = 0;
+                            t.completedAt = Date.now();
                             t.missedReason = isTargetReachedWithoutEntry 
-                                ? "Market direct TP par chali gayi baghair entry trigger kiye" 
+                                ? "Market direct full TP par chali gayi baghair entry trigger kiye" 
                                 : "Price entry touch kiye baghair door nikal gayi";
                             t.subText = "Entry point touch nahi hua • Capital 100% Protected ($0.00 Loss)";
                             if (typeof autoDetectAndSyncPipelineToJournal === "function") autoDetectAndSyncPipelineToJournal();
+                            savePipelinePersistence();
                         }
-                    }
                 }
 
                 // 2. IF ENTRY WAS FILLED (LIVE POSITION IN-PLAY)
@@ -3219,6 +3360,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 if (uncompleted.length > 0) {
                     CURRENT_PIPELINE_INDEX = DAY_TRADE_PIPELINE.indexOf(uncompleted[0]);
                     uncompleted[0].status = "ACTIVE";
+                    savePipelinePersistence();
                     renderTradePipelineTabs();
                 }
             }
