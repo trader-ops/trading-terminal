@@ -95,8 +95,8 @@ const auditResults = await send('Runtime.evaluate', {
       predStopLoss: document.getElementById('predStopLoss')?.innerText,
     };
 
-    // 6. Check Module 07 News wire count
-    const newsItems = document.querySelectorAll('.fj-news-card, .news-item').length;
+    // 7. Check Module 07 News wire count
+    const newsItems = document.querySelectorAll('.fj-wire-card').length;
 
     // 7. Check Module 09 Calculator
     const calcResult = document.getElementById('calcLotResult')?.innerText;
