@@ -3907,18 +3907,21 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     macLivePulse.style.boxShadow = "0 0 12px #00f59b";
                 }
             } else {
-                // Pending Setup
+                // Pending Setup - Stable Institutional Directives (Zero Flashing / No Flickering)
                 const distPips = isTradeBear ? Math.abs((entryPrice - cp) * 10).toFixed(0) : Math.abs((cp - entryPrice) * 10).toFixed(0);
-                const isNearZone = Math.abs(cp - entryPrice) <= 0.80;
-                if (isNearZone) {
-                    macActionTitle.innerHTML = isTradeBear ? `🔴 ABHI SELL EXECUTE KAREIN` : `🟢 ABHI BUY EXECUTE KAREIN`;
-                    macActionTitle.style.color = isTradeBear ? "#ef4444" : "#00f59b";
+                const isInsideZone = Math.abs(cp - entryPrice) <= 1.20;
+                
+                // Stable Authority Title that never flickers
+                macActionTitle.innerHTML = isTradeBear ? `🔴 SELL LIMIT ORDER` : `🟢 BUY LIMIT ORDER`;
+                macActionTitle.style.color = isTradeBear ? "#ef4444" : "#00f59b";
+
+                if (isInsideZone) {
                     if (macActionSub) {
-                        macActionSub.innerHTML = `Price entry zone ($${entryPrice.toFixed(2)}) mein hai! 1M/5M rejection wick dekh kar execute karein.`;
+                        macActionSub.innerHTML = `🎯 <strong>Price Entry Zone ($${entryPrice.toFixed(2)}) mein hai!</strong> 5M rejection wick confirm karke order fill hone dein.`;
                     }
                     if (macStateBadge) {
-                        macStateBadge.innerHTML = isTradeBear ? `🔴 EXECUTE SELL NOW` : `🟢 EXECUTE BUY NOW`;
-                        macStateBadge.style.background = isTradeBear ? "rgba(239, 68, 68, 0.25)" : "rgba(16, 185, 129, 0.25)";
+                        macStateBadge.innerHTML = isTradeBear ? `🎯 AT SELL ZONE (${distPips}p)` : `🎯 AT BUY ZONE (${distPips}p)`;
+                        macStateBadge.style.background = isTradeBear ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)";
                         macStateBadge.style.color = isTradeBear ? "#ef4444" : "#10b981";
                         macStateBadge.style.borderColor = isTradeBear ? "#ef4444" : "#10b981";
                     }
@@ -3927,10 +3930,8 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                         macLivePulse.style.boxShadow = "0 0 12px " + (isTradeBear ? "#ef4444" : "#00f59b");
                     }
                 } else {
-                    macActionTitle.innerHTML = isTradeBear ? `🔴 SELL LIMIT LAGA DEIN` : `🟢 BUY LIMIT LAGA DEIN`;
-                    macActionTitle.style.color = isTradeBear ? "#ef4444" : "#00f59b";
                     if (macActionSub) {
-                        macActionSub.innerHTML = `${activeTrade.session || '15M Setup'} • Entry sirf ${distPips} Pips door hai (${isTradeBear ? 'Waiting for Pullback' : 'Waiting for Dip'}) • 0.01 Lot`;
+                        macActionSub.innerHTML = `${activeTrade.session || '15M Setup'} • Rate ${distPips} Pips door hai (${isTradeBear ? 'Pullback ka wait' : 'Dip ka wait'}) • Safe Lot: 0.01–0.02`;
                     }
                     if (macStateBadge) {
                         macStateBadge.innerHTML = `⏳ PENDING LIMIT (${distPips}p Away)`;
