@@ -6908,6 +6908,10 @@ function autoDetectAndSyncPipelineToJournal() {
 
         const tradeDateStr = pipeTrade.date || getLiveMarketDateString();
 
+        const isRetest = (pipeTrade.reason && /retest|pullback|mitigat|fvg/i.test(pipeTrade.reason)) ||
+                         (pipeTrade.title && /retest|pullback|re-entry/i.test(pipeTrade.title));
+        const scenarioTag = isRetest ? "RETEST / PULLBACK" : "FIRST-TIME SWEEP";
+
         if (pipeTrade.status === "DONE") {
             const securedPips = pipeTrade.securedPips || pipeTrade.tp2Pips || 210;
             const securedDollars = pipeTrade.securedDollars || +(securedPips * 0.20).toFixed(2);
@@ -6917,6 +6921,7 @@ function autoDetectAndSyncPipelineToJournal() {
                 existing = {
                     id: tradeId,
                     category: "SETUP",
+                    scenario: scenarioTag,
                     title: pipeTrade.title,
                     date: tradeDateStr,
                     asset: `Gold (XAU/USD) ${pipeTrade.isBear ? "SELL" : "BUY"}`,
@@ -6948,6 +6953,7 @@ function autoDetectAndSyncPipelineToJournal() {
                 existing = {
                     id: tradeId,
                     category: "SETUP",
+                    scenario: scenarioTag,
                     title: pipeTrade.title,
                     date: tradeDateStr,
                     asset: `Gold (XAU/USD) ${pipeTrade.isBear ? "SELL" : "BUY"}`,
@@ -7181,6 +7187,13 @@ function renderUnifiedPerformanceJournal() {
             badgeText = `🛑 LOSS (-${Math.abs(t.pips || 0)} Pips • -$${Math.abs(t.pnlUsd || 0).toFixed(2)})`;
         }
 
+        const isRetest = (t.scenario && t.scenario.includes("RETEST")) || 
+                         (t.confluence && /retest|pullback|mitigat|fvg/i.test(t.confluence)) ||
+                         (t.title && /retest|pullback/i.test(t.title));
+        const scenarioBadge = isRetest
+            ? `<span style="background:rgba(168,85,247,0.18); border:1px solid rgba(168,85,247,0.45); color:#c084fc; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">🔄 RETEST / PULLBACK</span>`
+            : `<span style="background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.45); color:#38bdf8; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">⚡ FIRST-TIME SWEEP</span>`;
+
         const categoryBadge = isScalp 
             ? `<span style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); color:#fbbf24; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">⚡ TAB 2: RANGE SCALP</span>`
             : `<span style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">🎯 TAB 1: MAIN SETUP</span>`;
@@ -7201,7 +7214,7 @@ function renderUnifiedPerformanceJournal() {
             <div class="${cardClass}" data-id="${t.id}">
                 <div class="ac-header">
                     <div>
-                        <div class="ac-title" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">${categoryBadge} ${probBadge} <span>${t.title}</span></div>
+                        <div class="ac-title" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">${categoryBadge} ${scenarioBadge} ${probBadge} <span>${t.title}</span></div>
                         <div class="ac-date" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:5px;">
                             <span class="ac-date-badge" style="background:rgba(0, 210, 255, 0.14); border:1px solid rgba(0, 210, 255, 0.4); color:var(--color-cyan); font-weight:800; font-size:0.72rem; padding:2px 8px; border-radius:4px; font-family:var(--font-mono); display:inline-flex; align-items:center; gap:4px;">
                                 📅 <strong>${tradeDate}</strong>
@@ -7216,7 +7229,7 @@ function renderUnifiedPerformanceJournal() {
                     <span class="${badgeClass}">${badgeText}</span>
                 </div>
                 <div class="ac-levels">
-                    <div class="ac-level-item"><span>Executed Date:</span> <strong style="color:var(--color-cyan); font-family:var(--font-mono);">📅 ${tradeDate}</strong></div>
+                    <div class="ac-level-item"><span>Setup Scenario:</span> <strong style="color:${isRetest ? '#c084fc' : '#38bdf8'}; font-family:var(--font-mono);">${isRetest ? '🔄 Retest (Pullback / POI)' : '⚡ First-Time (Direct Sweep)'}</strong></div>
                     <div class="ac-level-item"><span>Win Ratio:</span> <strong style="color:${probColor}; font-family:var(--font-mono);">🎯 ${probVal}%${probGradeText}</strong></div>
                     <div class="ac-level-item"><span>Entry Price:</span> <strong>${t.entry}</strong></div>
                     <div class="ac-level-item"><span>Sniper SL:</span> <strong style="color:var(--color-red)">${t.sl}</strong></div>
