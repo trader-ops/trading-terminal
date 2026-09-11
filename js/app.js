@@ -3273,6 +3273,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                             t.fillTime = new Date().toLocaleTimeString();
                             if (typeof playEntryChime === "function") playEntryChime();
                         }
+                    } else {
                         // If price ran away or blew past without ever touching entry:
                         const isTargetReachedWithoutEntry = t.isBear ? (cp <= (t.tp2Price || (t.entryPrice - 15.00))) : (cp >= (t.tp2Price || (t.entryPrice + 15.00)));
                         const isBlownPastWithoutEntry = t.isBear ? (cp >= (t.slPrice + 4.00)) : (cp <= (t.slPrice - 4.00));
@@ -3289,6 +3290,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                             if (typeof autoDetectAndSyncPipelineToJournal === "function") autoDetectAndSyncPipelineToJournal();
                             savePipelinePersistence();
                         }
+                    }
                 }
 
                 // 2. IF ENTRY WAS FILLED (LIVE POSITION IN-PLAY)
