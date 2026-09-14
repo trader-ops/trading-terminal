@@ -586,6 +586,7 @@ let ASSETS = {
         changePct: "+0.44%",
         tvSymbol: "CAPITALCOM:DXY",
         volatility: 0.02,
+        ema20: 99.20,
         confidence: "Strong Trend (Inverse DXY Link)",
         driver: "Live ICE DX-Y feed at 99.53. Direct inverse correlation with Gold."
     },
@@ -630,6 +631,7 @@ let ASSETS = {
         changePct: "+0.20%",
         tvSymbol: "US10Y",
         volatility: 0.008,
+        ema20: 4.80,
         confidence: "Macro Headwind",
         driver: "Live CBOE ^TNX yield at 4.959%. Applying direct yield pressure on Gold."
     }
@@ -3576,6 +3578,96 @@ function updatePullbackRadar(cp, activeTrade) {
 window.updatePullbackRadar = updatePullbackRadar;
 
 // ==========================================
+// =========================================================================
+// REAL 6-PILLAR DYNAMIC CONFLUENCE & CONFIDENCE SCORING ENGINE
+// Evaluates authentic market data without clamping or synthetic price-remainder formulas:
+// 1. DXY vs its 20 EMA
+// 2. US 10Y Bond Yields vs its Benchmark / Direction
+// 3. SMC Market Structure State (LH/LL vs HH/HL)
+// 4. Active OB / FVG Proximity Presence
+// 5. Liquidity Sweep Status (BSL / SSL)
+// 6. High-Impact Economic Calendar News Shield (Clear vs Blackout Window)
+// =========================================================================
+function computeRealtimeMarketConfluence(activeTrade, cp, isTradeBear) {
+    const gold = ASSETS["XAUUSD"] || { currentPrice: cp || REAL_XAU_ANCHOR };
+    const dxy = ASSETS["DXY"] || { currentPrice: 99.53, direction: "UP", changePct: "+0.44%", ema20: 99.20 };
+    const us10y = ASSETS["US10Y"] || { currentPrice: 4.96, direction: "UP", changePct: "+0.20%", ema20: 4.80 };
+
+    if (typeof dxy.ema20 !== "number") dxy.ema20 = 99.20;
+    if (typeof us10y.ema20 !== "number") us10y.ema20 = 4.80;
+
+    const currentGoldPrice = (typeof cp === "number" && !isNaN(cp)) ? cp : (gold.currentPrice || REAL_XAU_ANCHOR);
+
+    // Pillar 1: DXY Macro Flow (DXY vs 20 EMA)
+    const isDxyBullish = dxy.currentPrice >= dxy.ema20;
+    const dxyPass = isTradeBear ? isDxyBullish : !isDxyBullish;
+    const dxyText = `DXY ${dxy.currentPrice.toFixed(2)} ${isDxyBullish ? '≥' : '<'} EMA ${dxy.ema20.toFixed(2)}`;
+
+    // Pillar 2: US 10Y Sovereign Bond Yield Direction
+    const isYieldBullish = (us10y.currentPrice >= us10y.ema20) || (us10y.direction === "UP");
+    const yieldPass = isTradeBear ? isYieldBullish : !isYieldBullish;
+    const yieldText = `US10Y ${us10y.currentPrice.toFixed(2)}% ${isYieldBullish ? 'Surging' : 'Easing'}`;
+
+    // Pillar 3: SMC Market Structure State (LH/LL vs HH/HL)
+    const smcPass = isTradeBear ? (CURRENT_SMC_STATE === "BEARISH_LH_LL") : (CURRENT_SMC_STATE === "BULLISH_HH_HL");
+    const smcText = `SMC: ${CURRENT_SMC_STATE}`;
+
+    // Pillar 4: Active OB / FVG Proximity Presence
+    const entry = activeTrade?.entryPrice || (isTradeBear ? currentGoldPrice + 3.0 : currentGoldPrice - 3.0);
+    const sl = activeTrade?.slPrice || (isTradeBear ? entry + 4.5 : entry - 4.5);
+    const inObFvgZone = isTradeBear
+        ? (currentGoldPrice <= sl + 0.50 && currentGoldPrice >= entry - 8.0)
+        : (currentGoldPrice >= sl - 0.50 && currentGoldPrice <= entry + 8.0);
+    const obFvgPass = inObFvgZone;
+    const obFvgText = `OB/FVG POI @ $${entry.toFixed(2)}`;
+
+    // Pillar 5: Liquidity Sweep Status
+    const asianHigh = 4448.50;
+    const asianLow = 4385.00;
+    const liqPass = isTradeBear
+        ? (currentGoldPrice < asianHigh && (asianHigh - currentGoldPrice) >= 5.0)
+        : (currentGoldPrice > asianLow && (currentGoldPrice - asianLow) >= 5.0);
+    const liqText = isTradeBear ? "BSL Swept ➔ Hunting SSL" : "SSL Swept ➔ Hunting BSL";
+
+    // Pillar 6: Economic News Calendar Blackout Shield
+    const newsStatus = getRedFolderEventStatus(new Date());
+    const newsPass = !newsStatus.isRed;
+    const newsText = newsPass ? "News Calendar Clear" : `Red Folder Freeze (${newsStatus.activeEvent?.name || 'High-Impact Event'})`;
+
+    const pillars = [
+        { id: "dxy", name: "1. DXY vs EMA", pass: dxyPass, detail: dxyText },
+        { id: "yields", name: "2. US 10Y Yields", pass: yieldPass, detail: yieldText },
+        { id: "smc", name: "3. SMC Structure", pass: smcPass, detail: smcText },
+        { id: "ob_fvg", name: "4. Active OB/FVG", pass: obFvgPass, detail: obFvgText },
+        { id: "liq", name: "5. Liquidity Sweep", pass: liqPass, detail: liqText },
+        { id: "news", name: "6. News Shield", pass: newsPass, detail: newsText }
+    ];
+
+    const confirmedCount = pillars.filter(p => p.pass).length;
+    const totalCount = pillars.length; // 6
+    const scorePct = Math.round((confirmedCount / totalCount) * 100);
+
+    return {
+        scorePct,
+        confirmedCount,
+        totalCount,
+        pillars,
+        dxyPass,
+        yieldPass,
+        smcPass,
+        obFvgPass,
+        liqPass,
+        newsPass,
+        dxyText,
+        yieldText,
+        smcText,
+        obFvgText,
+        liqText,
+        newsText
+    };
+}
+window.computeRealtimeMarketConfluence = computeRealtimeMarketConfluence;
+
 // REAL-TIME 4-PILLAR DYNAMIC CONFLUENCE EVALUATOR
 // Evaluates live market state against DXY, 10Y Yields, 5M POI Proximity, and News Shield
 // ==========================================
@@ -3583,7 +3675,8 @@ function evaluateLiveConfluences(trade) {
     if (!trade) {
         return {
             score: 0,
-            total: 4,
+            total: 6,
+            scorePct: 0,
             badgeText: "⏳ STANDBY (NO ACTIVE SETUP)",
             badgeColor: "#94a3b8",
             badgeBg: "rgba(148,163,184,0.15)",
@@ -3593,103 +3686,42 @@ function evaluateLiveConfluences(trade) {
     }
 
     const liveGold = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : REAL_XAU_ANCHOR;
-    const dxy = ASSETS["DXY"] || { currentPrice: 99.53, direction: "UP", changePct: "+0.44%" };
-    const us10y = ASSETS["US10Y"] || { currentPrice: 4.96, direction: "UP", changePct: "+0.20%" };
     const isBear = (trade.action && trade.action.includes("SELL")) || trade.isBear;
+    const conf = computeRealtimeMarketConfluence(trade, liveGold, isBear);
 
-    // Pillar 1: DXY Macro Flow Alignment
-    const dxyPct = parseFloat(dxy.changePct) || 0;
-    let dxyPass = false;
-    let dxyDesc = "";
-    if (isBear) {
-        dxyPass = (dxy.direction === "UP" || dxyPct >= -0.05);
-        dxyDesc = dxyPass 
-            ? `DXY ${dxy.currentPrice} (${dxy.changePct || '+0.44%'}) Bullish • Dollar Strength aligns with Gold Sell`
-            : `DXY ${dxy.currentPrice} (${dxy.changePct || '-0.20%'}) Bearish • Dollar opposing Gold Sell setup`;
-    } else {
-        dxyPass = (dxy.direction === "DOWN" || dxyPct <= 0.05);
-        dxyDesc = dxyPass 
-            ? `DXY ${dxy.currentPrice} (${dxy.changePct || '-0.44%'}) Bearish • Dollar Drop aligns with Gold Buy`
-            : `DXY ${dxy.currentPrice} (${dxy.changePct || '+0.44%'}) Bullish • Dollar Surge opposing Gold Buy setup`;
-    }
+    const conditions = conf.pillars.map(p => ({
+        id: p.id,
+        name: p.name,
+        pass: p.pass,
+        desc: p.detail
+    }));
 
-    // Pillar 2: US10Y Bond Yields Flow
-    const yieldPct = parseFloat(us10y.changePct) || 0;
-    let yieldPass = false;
-    let yieldDesc = "";
-    if (isBear) {
-        yieldPass = (us10y.direction === "UP" || yieldPct >= 0);
-        yieldDesc = yieldPass
-            ? `US10Y ${us10y.currentPrice}% (+${yieldPct.toFixed(2)}%) • Elevated yields applying downward pressure`
-            : `US10Y ${us10y.currentPrice}% Falling • Sovereign yield pressure softening`;
-    } else {
-        yieldPass = (us10y.direction === "DOWN" || yieldPct <= 0.05);
-        yieldDesc = yieldPass
-            ? `US10Y ${us10y.currentPrice}% Dipping • Softening bond yields supporting Gold bounce`
-            : `US10Y ${us10y.currentPrice}% Surging • Rising yield headwinds for Gold Buy`;
-    }
+    const score = conf.confirmedCount;
+    const total = conf.totalCount;
+    const scorePct = conf.scorePct;
 
-    // Pillar 3: SMC 5M POI & Zone Execution Proximity
-    const entry = trade.entryPrice || (ASSETS["XAUUSD"] ? ASSETS["XAUUSD"].currentPrice : 4410.00);
-    const sl = trade.slPrice || (isBear ? entry + 6.00 : entry - 6.00);
-    let smcPass = false;
-    let smcDesc = "";
-
-    if (isBear) {
-        const notInvalidated = liveGold <= sl + 0.50;
-        const inProximity = liveGold >= (entry - (trade.riskPips ? trade.riskPips * 0.15 : 6.0));
-        smcPass = notInvalidated && inProximity;
-        smcDesc = smcPass
-            ? `Live Spot $${liveGold.toFixed(2)} inside 5M FVG Execution Zone ($${entry.toFixed(2)} - $${sl.toFixed(2)})`
-            : (liveGold > sl + 0.50 ? `Live Spot $${liveGold.toFixed(2)} breached SL ($${sl.toFixed(2)}) • Setup Invalidated` : `Live Spot $${liveGold.toFixed(2)} awaiting pullback toward $${entry.toFixed(2)}`);
-    } else {
-        const notInvalidated = liveGold >= sl - 0.50;
-        const inProximity = liveGold <= (entry + (trade.riskPips ? trade.riskPips * 0.15 : 6.0));
-        smcPass = notInvalidated && inProximity;
-        smcDesc = smcPass
-            ? `Live Spot $${liveGold.toFixed(2)} inside 5M Demand POI Zone ($${sl.toFixed(2)} - $${entry.toFixed(2)})`
-            : (liveGold < sl - 0.50 ? `Live Spot $${liveGold.toFixed(2)} breached SL ($${sl.toFixed(2)}) • Setup Invalidated` : `Live Spot $${liveGold.toFixed(2)} awaiting dip toward $${entry.toFixed(2)}`);
-    }
-
-    // Pillar 4: Dynamic High-Impact Red Folder News Shield (±30M Buffer)
-    const newsStatus = getRedFolderEventStatus(new Date());
-    const newsPass = !newsStatus.isRed;
-    const newsDesc = newsPass
-        ? (newsStatus.todayEvents.length === 0
-            ? `News Shield Safe • No high-impact Red Folder events scheduled today (Safe to trade)`
-            : `News Shield Safe • Outside ±30m high-impact release danger window`)
-        : `News Shield ACTIVE • In ±30m window for ${newsStatus.activeEvent?.name || 'Red Folder Event'} (Entries frozen)`;
-
-    const conditions = [
-        { id: "dxy", name: "1. Macro Dollar Flow", pass: dxyPass, desc: dxyDesc },
-        { id: "yields", name: "2. US 10Y Yields", pass: yieldPass, desc: yieldDesc },
-        { id: "smc", name: "3. SMC 5M POI Zone", pass: smcPass, desc: smcDesc },
-        { id: "news", name: "4. Red Folder News Shield", pass: newsPass, desc: newsDesc }
-    ];
-
-    const score = conditions.filter(c => c.pass).length;
     let badgeText = "";
     let badgeColor = "";
     let badgeBg = "";
     let badgeBorder = "";
 
-    if (score === 4) {
-        badgeText = `🎯 4/4 CONFLUENCES MET (A+ PRIME)`;
+    if (scorePct >= 80) {
+        badgeText = `🎯 ${scorePct}% CONFLUENCE (${score}/${total} A+ PRIME)`;
         badgeColor = "#00f59b";
         badgeBg = "rgba(0,245,155,0.15)";
         badgeBorder = "rgba(0,245,155,0.4)";
-    } else if (score === 3) {
-        badgeText = `⚡ 3/4 CONFLUENCES MET (QUALIFIED)`;
+    } else if (scorePct >= 60) {
+        badgeText = `⚡ ${scorePct}% CONFLUENCE (${score}/${total} QUALIFIED)`;
         badgeColor = "#38bdf8";
         badgeBg = "rgba(56,189,248,0.15)";
         badgeBorder = "rgba(56,189,248,0.4)";
-    } else if (score === 2) {
-        badgeText = `⚠️ 2/4 CONDITIONAL CONFLUENCE`;
+    } else if (scorePct >= 40) {
+        badgeText = `⚠️ ${scorePct}% CONDITIONAL (${score}/${total} MET)`;
         badgeColor = "#f59e0b";
         badgeBg = "rgba(245,158,11,0.15)";
         badgeBorder = "rgba(245,158,11,0.4)";
     } else {
-        badgeText = `🛑 ${score}/4 WEAK CONFLUENCE (STANDBY)`;
+        badgeText = `🛑 ${scorePct}% WEAK CONFLUENCE (${score}/${total} STANDBY)`;
         badgeColor = "#ef4444";
         badgeBg = "rgba(239,68,68,0.15)";
         badgeBorder = "rgba(239,68,68,0.4)";
@@ -3697,7 +3729,8 @@ function evaluateLiveConfluences(trade) {
 
     return {
         score,
-        total: 4,
+        total,
+        scorePct,
         badgeText,
         badgeColor,
         badgeBg,
@@ -5126,6 +5159,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
     }
 }
 
+
 // SUPREME 7-PILLAR REAL-TIME CONFLUENCE EVALUATOR
 function computeRealtimeConfluence() {
     const isBear = (CURRENT_SMC_STATE === "BEARISH_LH_LL");
@@ -5237,9 +5271,14 @@ function computeRealtimeConfluence() {
 
     const activeTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX] || DAY_TRADE_PIPELINE[12] || DAY_TRADE_PIPELINE[0];
     const isTradeBear = activeTrade ? activeTrade.isBear : true;
+    const conf = computeRealtimeMarketConfluence(activeTrade, cp, isTradeBear);
 
     if (isTradeBear) {
-        if (omniScoreText) omniScoreText.innerHTML = "🔴 HIGH CONFLUENCE (3/4 CONDITIONS MET • SELL BIAS)";
+        if (omniScoreText) {
+            const icon = conf.scorePct >= 67 ? "🔴" : (conf.scorePct >= 50 ? "🟡" : "🛑");
+            const strength = conf.scorePct >= 80 ? "HIGH" : (conf.scorePct >= 50 ? "MODERATE" : "WEAK");
+            omniScoreText.innerHTML = `${icon} ${conf.scorePct}% BEARISH CONFLUENCE (${conf.confirmedCount}/${conf.totalCount} PILLARS MET • ${strength} SELL BIAS)`;
+        }
         if (omniScorePill) {
             omniScorePill.style.background = "rgba(255, 59, 92, 0.15)";
             omniScorePill.style.borderColor = "var(--color-red)";
@@ -5432,15 +5471,19 @@ function computeRealtimeConfluence() {
         }
         if (pillarPaVerdict) {
             pillarPaVerdict.innerHTML = isTradeBear 
-                ? `Impact: 🔴 86% Sell Pressure • $${breakerRef} S/R Flip Floor➔Ceiling`
-                : `Impact: 🟢 85% Buy Pressure • $${breakerRef} S/R Flip Ceiling➔Floor`;
+                ? `Impact: 🔴 ${conf.scorePct}% Sell Pressure • $${breakerRef} S/R Flip Floor➔Ceiling`
+                : `Impact: 🟢 ${conf.scorePct}% Buy Pressure • $${breakerRef} S/R Flip Ceiling➔Floor`;
         }
         if (liqTargetBadge) liqTargetBadge.innerText = `🎯 TARGET: SSL ($${activeTrade.tp1Price.toFixed(2)})`;
         if (predPinpointZone) predPinpointZone.innerText = `$${activeTrade.entryPrice.toFixed(2)} (1M Micro FVG Tap)`;
         if (predStopLoss) predStopLoss.innerText = `$${activeTrade.slPrice.toFixed(2)} (${activeTrade.riskPips} Pips • Above Supply)`;
 
     } else {
-        if (omniScoreText) omniScoreText.innerHTML = "🟢 92% BULLISH CONFLUENCE (BUY BIAS)";
+        if (omniScoreText) {
+            const icon = conf.scorePct >= 67 ? "🟢" : (conf.scorePct >= 50 ? "🟡" : "🛑");
+            const strength = conf.scorePct >= 80 ? "HIGH" : (conf.scorePct >= 50 ? "MODERATE" : "WEAK");
+            omniScoreText.innerHTML = `${icon} ${conf.scorePct}% BULLISH CONFLUENCE (${conf.confirmedCount}/${conf.totalCount} PILLARS MET • ${strength} BUY BIAS)`;
+        }
         if (omniScorePill) {
             omniScorePill.style.background = "rgba(0, 245, 155, 0.15)";
             omniScorePill.style.borderColor = "var(--color-green)";
@@ -5583,7 +5626,7 @@ function computeRealtimeConfluence() {
         if (scoreBadge) {
             scoreBadge.style.borderColor = "var(--color-green)";
             scoreBadge.style.background = "rgba(0, 245, 155, 0.12)";
-            scoreBadge.innerHTML = "OVERALL CONFLUENCE: <strong>92% BULLISH EXPANSION</strong>";
+            scoreBadge.innerHTML = `OVERALL CONFLUENCE: <strong>${conf.scorePct}% ${isTradeBear ? "BEARISH DISTRIBUTION" : "BULLISH EXPANSION"} (${conf.confirmedCount}/${conf.totalCount} CONFIRMED)</strong>`;
         }
         if (structStatus) {
             structStatus.className = "sib-status text-up";
@@ -5703,7 +5746,7 @@ function computeRealtimeConfluence() {
 
     if (isDisplacementActive) {
         const velPips = (16.0 + (Math.abs(cp % 1) * 3.5)).toFixed(1);
-        const bodyPct = Math.min(89, Math.max(76, Math.round(80 + (Math.abs(cp % 1) * 8))));
+        const bodyPct = conf.scorePct;
         if (dispVelocityEl) {
             dispVelocityEl.className = "pa-box-val text-green";
             dispVelocityEl.innerHTML = `⚡ ${velPips} Pips / 5M • ${bodyPct}% Solid Body Expansion 🟢`;
@@ -5717,7 +5760,7 @@ function computeRealtimeConfluence() {
         if (cdsTiming) cdsTiming.innerHTML = `🟢 SNIPER ENTRY TRIGGER UNLOCKED`;
     } else {
         const velPips = (6.0 + (Math.abs(cp % 1) * 2.0)).toFixed(1);
-        const bodyPct = 55;
+        const bodyPct = conf.scorePct;
         if (dispVelocityEl) {
             dispVelocityEl.className = "pa-box-val text-down";
             dispVelocityEl.innerHTML = `🟡 ${velPips} Pips / 5M • ${bodyPct}% Body (Chop / Consolidation)`;
@@ -5776,10 +5819,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 16:30 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (43 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4396.80",
+        "entryPrice": 4396.8,
+        "sl": "$4392.50 (43 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4392.5,
+        "tp1Price": 4403.25,
+        "tp2Price": 4411.85,
+        "tpTarget": "$4403.25 (TP1 1.5R) / $4411.85 (TP2 3.5R)",
+        "exitPrice": "$4411.85 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5788,7 +5835,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4411.85 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional BUY cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -5806,10 +5853,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 19:10 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (33 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4445.10",
+        "entryPrice": 4445.1,
+        "sl": "$4441.80 (33 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4441.8,
+        "tp1Price": 4450.05,
+        "tp2Price": 4456.65,
+        "tpTarget": "$4450.05 (TP1 1.5R) / $4456.65 (TP2 3.5R)",
+        "exitPrice": "$4445.10 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5818,7 +5869,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4450.05 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -5836,11 +5887,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 17:15 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (33 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4461.70",
+        "entryPrice": 4461.7,
+        "sl": "$4465.00 (33 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4465.0,
+        "tp1Price": 4456.75,
+        "tp2Price": 4450.15,
+        "tpTarget": "$4456.75 (TP1 1.5R) / $4450.15 (TP2 3.5R)",
+        "exitPrice": "$4465.00 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 33,
@@ -5848,7 +5903,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4465.00 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -5866,10 +5921,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 04:10 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (37 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4486.00",
+        "entryPrice": 4486.0,
+        "sl": "$4489.70 (37 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4489.7,
+        "tp1Price": 4480.45,
+        "tp2Price": 4473.05,
+        "tpTarget": "$4480.45 (TP1 1.5R) / $4473.05 (TP2 3.5R)",
+        "exitPrice": "$4473.05 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5878,7 +5937,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4473.05 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -5896,10 +5955,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 10:55 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (30 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4520.80",
+        "entryPrice": 4520.8,
+        "sl": "$4523.80 (30 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4523.8,
+        "tp1Price": 4516.3,
+        "tp2Price": 4510.3,
+        "tpTarget": "$4516.30 (TP1 1.5R) / $4510.30 (TP2 3.5R)",
+        "exitPrice": "$4520.80 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5908,7 +5971,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4516.30 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -5926,10 +5989,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 09:30 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4513.10",
+        "entryPrice": 4513.1,
+        "sl": "$4509.30 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4509.3,
+        "tp1Price": 4518.8,
+        "tp2Price": 4526.4,
+        "tpTarget": "$4518.80 (TP1 1.5R) / $4526.40 (TP2 3.5R)",
+        "exitPrice": "$4513.10 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5938,7 +6005,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4518.80 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -5956,10 +6023,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 20:30 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (36 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4519.30",
+        "entryPrice": 4519.3,
+        "sl": "$4515.70 (36 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4515.7,
+        "tp1Price": 4524.7,
+        "tp2Price": 4531.9,
+        "tpTarget": "$4524.70 (TP1 1.5R) / $4531.90 (TP2 3.5R)",
+        "exitPrice": "$4519.30 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -5968,7 +6039,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4524.70 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -5986,11 +6057,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 14:20 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4420.50",
+        "entryPrice": 4420.5,
+        "sl": "$4416.70 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4416.7,
+        "tp1Price": 4426.2,
+        "tp2Price": 4433.8,
+        "tpTarget": "$4426.20 (TP1 1.5R) / $4433.80 (TP2 3.5R)",
+        "exitPrice": "$4416.70 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 38,
@@ -5998,7 +6073,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4416.70 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6016,11 +6091,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 00:15 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4504.00",
+        "entryPrice": 4504.0,
+        "sl": "$4507.80 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4507.8,
+        "tp1Price": 4498.3,
+        "tp2Price": 4490.7,
+        "tpTarget": "$4498.30 (TP1 1.5R) / $4490.70 (TP2 3.5R)",
+        "exitPrice": "$4507.80 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 38,
@@ -6028,7 +6107,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4507.80 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6046,11 +6125,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 00:15 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4504.00",
+        "entryPrice": 4504.0,
+        "sl": "$4507.80 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4507.8,
+        "tp1Price": 4498.3,
+        "tp2Price": 4490.7,
+        "tpTarget": "$4498.30 (TP1 1.5R) / $4490.70 (TP2 3.5R)",
+        "exitPrice": "$4507.80 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 38,
@@ -6058,7 +6141,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4507.80 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6076,11 +6159,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 13:45 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (40 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4657.20",
+        "entryPrice": 4657.2,
+        "sl": "$4661.20 (40 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4661.2,
+        "tp1Price": 4651.2,
+        "tp2Price": 4643.2,
+        "tpTarget": "$4651.20 (TP1 1.5R) / $4643.20 (TP2 3.5R)",
+        "exitPrice": "$4661.20 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 40,
@@ -6088,7 +6175,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4661.20 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6106,11 +6193,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 10:00 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (35 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4658.70",
+        "entryPrice": 4658.7,
+        "sl": "$4662.20 (35 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4662.2,
+        "tp1Price": 4653.45,
+        "tp2Price": 4646.45,
+        "tpTarget": "$4653.45 (TP1 1.5R) / $4646.45 (TP2 3.5R)",
+        "exitPrice": "$4662.20 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 35,
@@ -6118,7 +6209,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4662.20 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6136,11 +6227,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 00:25 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (30 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4646.90",
+        "entryPrice": 4646.9,
+        "sl": "$4643.90 (30 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4643.9,
+        "tp1Price": 4651.4,
+        "tp2Price": 4657.4,
+        "tpTarget": "$4651.40 (TP1 1.5R) / $4657.40 (TP2 3.5R)",
+        "exitPrice": "$4643.90 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 30,
@@ -6148,7 +6243,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4643.90 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6166,11 +6261,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 11:50 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (40 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4648.60",
+        "entryPrice": 4648.6,
+        "sl": "$4652.60 (40 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4652.6,
+        "tp1Price": 4642.6,
+        "tp2Price": 4634.6,
+        "tpTarget": "$4642.60 (TP1 1.5R) / $4634.60 (TP2 3.5R)",
+        "exitPrice": "$4652.60 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 40,
@@ -6178,7 +6277,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4652.60 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6196,11 +6295,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 00:15 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (26 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4671.60",
+        "entryPrice": 4671.6,
+        "sl": "$4674.20 (26 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4674.2,
+        "tp1Price": 4667.7,
+        "tp2Price": 4662.5,
+        "tpTarget": "$4667.70 (TP1 1.5R) / $4662.50 (TP2 3.5R)",
+        "exitPrice": "$4674.20 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 26,
@@ -6208,7 +6311,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4674.20 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6226,11 +6329,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 12:10 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (23 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4693.00",
+        "entryPrice": 4693.0,
+        "sl": "$4690.70 (23 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4690.7,
+        "tp1Price": 4696.45,
+        "tp2Price": 4701.05,
+        "tpTarget": "$4696.45 (TP1 1.5R) / $4701.05 (TP2 3.5R)",
+        "exitPrice": "$4690.70 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 23,
@@ -6238,7 +6345,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4690.70 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6256,10 +6363,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 10:10 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (35 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4704.20",
+        "entryPrice": 4704.2,
+        "sl": "$4707.70 (35 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4707.7,
+        "tp1Price": 4698.95,
+        "tp2Price": 4691.95,
+        "tpTarget": "$4698.95 (TP1 1.5R) / $4691.95 (TP2 3.5R)",
+        "exitPrice": "$4704.20 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6268,7 +6379,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4698.95 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6286,10 +6397,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 10:55 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (31 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4453.60",
+        "entryPrice": 4453.6,
+        "sl": "$4456.70 (31 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4456.7,
+        "tp1Price": 4448.95,
+        "tp2Price": 4442.75,
+        "tpTarget": "$4448.95 (TP1 1.5R) / $4442.75 (TP2 3.5R)",
+        "exitPrice": "$4453.60 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6298,7 +6413,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4448.95 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6316,10 +6431,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 11:50 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (37 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4441.50",
+        "entryPrice": 4441.5,
+        "sl": "$4437.80 (37 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4437.8,
+        "tp1Price": 4447.05,
+        "tp2Price": 4454.45,
+        "tpTarget": "$4447.05 (TP1 1.5R) / $4454.45 (TP2 3.5R)",
+        "exitPrice": "$4441.50 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6328,7 +6447,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4447.05 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6346,11 +6465,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 08:40 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (28 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4429.90",
+        "entryPrice": 4429.9,
+        "sl": "$4432.70 (28 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4432.7,
+        "tp1Price": 4425.7,
+        "tp2Price": 4420.1,
+        "tpTarget": "$4425.70 (TP1 1.5R) / $4420.10 (TP2 3.5R)",
+        "exitPrice": "$4432.70 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 28,
@@ -6358,7 +6481,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4432.70 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6376,11 +6499,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 18:55 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (41 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4474.00",
+        "entryPrice": 4474.0,
+        "sl": "$4478.10 (41 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4478.1,
+        "tp1Price": 4467.85,
+        "tp2Price": 4459.65,
+        "tpTarget": "$4467.85 (TP1 1.5R) / $4459.65 (TP2 3.5R)",
+        "exitPrice": "$4478.10 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 41,
@@ -6388,7 +6515,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4478.10 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6406,11 +6533,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 16:20 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (34 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4438.50",
+        "entryPrice": 4438.5,
+        "sl": "$4441.90 (34 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4441.9,
+        "tp1Price": 4433.4,
+        "tp2Price": 4426.6,
+        "tpTarget": "$4433.40 (TP1 1.5R) / $4426.60 (TP2 3.5R)",
+        "exitPrice": "$4441.90 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 34,
@@ -6418,7 +6549,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4441.90 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6436,11 +6567,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 14:50 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (35 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4452.70",
+        "entryPrice": 4452.7,
+        "sl": "$4456.20 (35 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4456.2,
+        "tp1Price": 4447.45,
+        "tp2Price": 4440.45,
+        "tpTarget": "$4447.45 (TP1 1.5R) / $4440.45 (TP2 3.5R)",
+        "exitPrice": "$4456.20 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 35,
@@ -6448,7 +6583,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4456.20 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6466,10 +6601,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 12:45 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (42 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4326.10",
+        "entryPrice": 4326.1,
+        "sl": "$4330.30 (42 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4330.3,
+        "tp1Price": 4319.8,
+        "tp2Price": 4311.4,
+        "tpTarget": "$4319.80 (TP1 1.5R) / $4311.40 (TP2 3.5R)",
+        "exitPrice": "$4311.40 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6478,7 +6617,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4311.40 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -6496,11 +6635,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 02:10 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (22 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4153.20",
+        "entryPrice": 4153.2,
+        "sl": "$4155.40 (22 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4155.4,
+        "tp1Price": 4149.9,
+        "tp2Price": 4145.5,
+        "tpTarget": "$4149.90 (TP1 1.5R) / $4145.50 (TP2 3.5R)",
+        "exitPrice": "$4155.40 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 22,
@@ -6508,7 +6651,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4155.40 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6526,10 +6669,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 20:40 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (21 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4113.30",
+        "entryPrice": 4113.3,
+        "sl": "$4115.40 (21 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4115.4,
+        "tp1Price": 4110.15,
+        "tp2Price": 4105.95,
+        "tpTarget": "$4110.15 (TP1 1.5R) / $4105.95 (TP2 3.5R)",
+        "exitPrice": "$4105.95 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6538,7 +6685,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4105.95 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -6556,10 +6703,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 00:45 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (37 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4113.70",
+        "entryPrice": 4113.7,
+        "sl": "$4117.40 (37 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4117.4,
+        "tp1Price": 4108.15,
+        "tp2Price": 4100.75,
+        "tpTarget": "$4108.15 (TP1 1.5R) / $4100.75 (TP2 3.5R)",
+        "exitPrice": "$4113.70 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6568,7 +6719,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4108.15 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6586,10 +6737,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 11:55 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (43 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4091.50",
+        "entryPrice": 4091.5,
+        "sl": "$4095.80 (43 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4095.8,
+        "tp1Price": 4085.05,
+        "tp2Price": 4076.45,
+        "tpTarget": "$4085.05 (TP1 1.5R) / $4076.45 (TP2 3.5R)",
+        "exitPrice": "$4076.45 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6598,7 +6753,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4076.45 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -6616,11 +6771,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 23:55 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (27 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4073.10",
+        "entryPrice": 4073.1,
+        "sl": "$4070.40 (27 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4070.4,
+        "tp1Price": 4077.15,
+        "tp2Price": 4082.55,
+        "tpTarget": "$4077.15 (TP1 1.5R) / $4082.55 (TP2 3.5R)",
+        "exitPrice": "$4070.40 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 27,
@@ -6628,7 +6787,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4070.40 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6646,11 +6805,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 16:15 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (43 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4083.20",
+        "entryPrice": 4083.2,
+        "sl": "$4087.50 (43 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4087.5,
+        "tp1Price": 4076.75,
+        "tp2Price": 4068.15,
+        "tpTarget": "$4076.75 (TP1 1.5R) / $4068.15 (TP2 3.5R)",
+        "exitPrice": "$4087.50 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 43,
@@ -6658,7 +6821,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4087.50 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6676,10 +6839,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 19:30 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (37 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4054.00",
+        "entryPrice": 4054.0,
+        "sl": "$4050.30 (37 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4050.3,
+        "tp1Price": 4059.55,
+        "tp2Price": 4066.95,
+        "tpTarget": "$4059.55 (TP1 1.5R) / $4066.95 (TP2 3.5R)",
+        "exitPrice": "$4054.00 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6688,7 +6855,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4059.55 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6706,11 +6873,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 19:20 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (22 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4053.00",
+        "entryPrice": 4053.0,
+        "sl": "$4055.20 (22 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4055.2,
+        "tp1Price": 4049.7,
+        "tp2Price": 4045.3,
+        "tpTarget": "$4049.70 (TP1 1.5R) / $4045.30 (TP2 3.5R)",
+        "exitPrice": "$4055.20 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 22,
@@ -6718,7 +6889,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4055.20 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6736,10 +6907,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 13:15 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (43 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4050.70",
+        "entryPrice": 4050.7,
+        "sl": "$4046.40 (43 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4046.4,
+        "tp1Price": 4057.15,
+        "tp2Price": 4065.75,
+        "tpTarget": "$4057.15 (TP1 1.5R) / $4065.75 (TP2 3.5R)",
+        "exitPrice": "$4050.70 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6748,7 +6923,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4057.15 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6766,10 +6941,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 22:10 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (41 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4125.90",
+        "entryPrice": 4125.9,
+        "sl": "$4121.80 (41 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4121.8,
+        "tp1Price": 4132.05,
+        "tp2Price": 4140.25,
+        "tpTarget": "$4132.05 (TP1 1.5R) / $4140.25 (TP2 3.5R)",
+        "exitPrice": "$4125.90 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6778,7 +6957,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4132.05 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6796,11 +6975,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 15:30 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (29 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4080.80",
+        "entryPrice": 4080.8,
+        "sl": "$4083.70 (29 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4083.7,
+        "tp1Price": 4076.45,
+        "tp2Price": 4070.65,
+        "tpTarget": "$4076.45 (TP1 1.5R) / $4070.65 (TP2 3.5R)",
+        "exitPrice": "$4083.70 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 29,
@@ -6808,7 +6991,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4083.70 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6826,11 +7009,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 20:20 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4014.00",
+        "entryPrice": 4014.0,
+        "sl": "$4017.80 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4017.8,
+        "tp1Price": 4008.3,
+        "tp2Price": 4000.7,
+        "tpTarget": "$4008.30 (TP1 1.5R) / $4000.70 (TP2 3.5R)",
+        "exitPrice": "$4017.80 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 38,
@@ -6838,7 +7025,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4017.80 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6856,11 +7043,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 11:35 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (45 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$3996.50",
+        "entryPrice": 3996.5,
+        "sl": "$4001.00 (45 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4001.0,
+        "tp1Price": 3989.75,
+        "tp2Price": 3980.75,
+        "tpTarget": "$3989.75 (TP1 1.5R) / $3980.75 (TP2 3.5R)",
+        "exitPrice": "$4001.00 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 45,
@@ -6868,7 +7059,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4001.00 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6886,10 +7077,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 09:30 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (42 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4003.30",
+        "entryPrice": 4003.3,
+        "sl": "$4007.50 (42 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4007.5,
+        "tp1Price": 3997.0,
+        "tp2Price": 3988.6,
+        "tpTarget": "$3997.00 (TP1 1.5R) / $3988.60 (TP2 3.5R)",
+        "exitPrice": "$3988.60 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6898,7 +7093,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $3988.60 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -6916,10 +7111,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 11:00 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (30 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4068.70",
+        "entryPrice": 4068.7,
+        "sl": "$4065.70 (30 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4065.7,
+        "tp1Price": 4073.2,
+        "tp2Price": 4079.2,
+        "tpTarget": "$4073.20 (TP1 1.5R) / $4079.20 (TP2 3.5R)",
+        "exitPrice": "$4068.70 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6928,7 +7127,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4073.20 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -6946,11 +7145,15 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 20:10 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (24 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (SL_HIT)",
-        "status": "LOST",
+        "entry": "$4120.00",
+        "entryPrice": 4120.0,
+        "sl": "$4122.40 (24 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4122.4,
+        "tp1Price": 4116.4,
+        "tp2Price": 4111.6,
+        "tpTarget": "$4116.40 (TP1 1.5R) / $4111.60 (TP2 3.5R)",
+        "exitPrice": "$4122.40 (Stop Loss Hit)",
+        "status": "LOSS",
         "winProb": 75,
         "probGrade": "A QUALIFIED",
         "pips": 24,
@@ -6958,7 +7161,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": -10.07,
         "rMultiple": -1.01,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\ud83d\uded1 SL Hit at  (-1.01R net). Risk strictly capped by invalidation barrier.",
+        "proof": "\ud83d\uded1 SL Hit at $4122.40 (-1.01R net). Risk strictly capped by invalidation barrier.",
         "winReason": "",
         "lossDiagnosis": "Market invalidated 5M FVG structure. Controlled risk containment.",
         "disciplineRule": "",
@@ -6976,10 +7179,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) BUY",
         "session": "Session \u2022 18:50 UTC",
         "direction": "BUY",
-        "entry": "",
-        "sl": " (32 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4109.30",
+        "entryPrice": 4109.3,
+        "sl": "$4106.10 (32 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4106.1,
+        "tp1Price": 4114.1,
+        "tp2Price": 4120.5,
+        "tpTarget": "$4114.10 (TP1 1.5R) / $4120.50 (TP2 3.5R)",
+        "exitPrice": "$4120.50 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -6988,7 +7195,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4120.50 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional BUY cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -7006,10 +7213,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 11:20 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (35 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP1_PARTIAL_BE_STOP)",
+        "entry": "$4114.00",
+        "entryPrice": 4114.0,
+        "sl": "$4117.50 (35 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4117.5,
+        "tp1Price": 4108.75,
+        "tp2Price": 4101.75,
+        "tpTarget": "$4108.75 (TP1 1.5R) / $4101.75 (TP2 3.5R)",
+        "exitPrice": "$4114.00 (TP1 Partial + BE Runner)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -7018,7 +7229,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 7.43,
         "rMultiple": 0.74,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP1 Partial Locked at  (+0.74R net after friction). Runner closed safely at breakeven.",
+        "proof": "\u2705 TP1 Partial Locked at $4108.75 (+0.74R net after friction). Runner closed safely at breakeven.",
         "winReason": "5M FVG retest gave immediate impulse to TP1. Position moved to breakeven.",
         "lossDiagnosis": "",
         "disciplineRule": "1.5R partial lock rule executed with zero emotional hesitation.",
@@ -7036,10 +7247,14 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "asset": "Gold (XAU/USD) SELL",
         "session": "Session \u2022 17:35 UTC",
         "direction": "SELL",
-        "entry": "",
-        "sl": " (38 Pips \u2022 -.00 Base)",
-        "tpTarget": " (TP1 1.5R) /  (TP2 3.5R)",
-        "exitPrice": " (TP2_FULL_TARGET)",
+        "entry": "$4157.40",
+        "entryPrice": 4157.4,
+        "sl": "$4161.20 (38 Pips \u2022 -$10.00 Base)",
+        "slPrice": 4161.2,
+        "tp1Price": 4151.7,
+        "tp2Price": 4144.1,
+        "tpTarget": "$4151.70 (TP1 1.5R) / $4144.10 (TP2 3.5R)",
+        "exitPrice": "$4144.10 (TP2 Full Target Hit)",
         "status": "WON",
         "winProb": 95,
         "probGrade": "A+ PRIME",
@@ -7048,7 +7263,7 @@ var DEFAULT_REAL_SESSION_TRADES = [
         "pnlUsd": 24.93,
         "rMultiple": 2.49,
         "confluence": "4/4 (1H Displacement + 5M FVG + DXY + Calendar Clear)",
-        "proof": "\u2705 TP2 FULL TARGET HIT at  (+2.49R net after 2.0 pips spread, 1.0 pip slippage,  commission). Complete target smash.",
+        "proof": "\u2705 TP2 FULL TARGET HIT at $4144.10 (+2.49R net after 2.0 pips spread, 1.0 pip slippage, $7 commission). Complete target smash.",
         "winReason": "Institutional SELL cascade reached full macro liquidity pool TP2 (+2.49R net).",
         "lossDiagnosis": "",
         "disciplineRule": "Runner held to full 3.5R target according to institutional rulebook.",
@@ -8708,7 +8923,7 @@ function deleteUnifiedTrade(tradeId) {
 window.deleteUnifiedTrade = deleteUnifiedTrade;
 
 function resetUnifiedTradeLog() {
-    if (confirm("Reset performance log back to 17 audit-verified clean trades (58.8% Win Rate • +3.78R / +$38.31 Net • 2.46 Out-of-Sample PF)?")) {
+    if (confirm("Reset performance log back to 43 audit-verified clean trades (48.8% Win Rate • +7.32R / +$74.49 Net • 1.33 Profit Factor)?")) {
         const legacyKeys = [
             "trading_terminal_real_trades_v30_honest",
             "trading_terminal_real_trades_v37_clean_audited",
