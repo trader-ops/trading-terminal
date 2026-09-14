@@ -16,21 +16,15 @@ const allGold5m = raw.gold5m;
 const allDxy15m = raw.dxy15m;
 
 console.log(`\n================================================================================`);
-console.log(`TRAIN / TEST OUT-OF-SAMPLE AUDIT (60-DAY FROZEN DATASET)`);
+console.log(`STRICT AUDIT ENGINE: GLOBAL INDICATORS + ACTIVE POSITION LOCK + TRAIN/TEST SPLIT`);
 console.log(`================================================================================`);
 console.log(`Total Dataset: ${allGold5m.length} Gold 5M bars | ${allDxy15m.length} DXY 15M bars`);
 console.log(`Date Span:     ${allGold5m[0].iso}  -->  ${allGold5m[allGold5m.length - 1].iso}`);
 
-// Determine midpoint split timestamp
-const startTime = allGold5m[0].time;
-const endTime = allGold5m[allGold5m.length - 1].time;
-const midTime = startTime + (endTime - startTime) / 2;
-const midIso = new Date(midTime).toISOString();
-
-console.log(`Split Point:   ${midIso}`);
-console.log(`First Half (In-Sample / Train):  ${allGold5m[0].iso} to ${midIso}`);
-console.log(`Second Half (Out-of-Sample/Test): ${midIso} to ${allGold5m[allGold5m.length - 1].iso}`);
-
+// -------------------------------------------------------------------------
+// DELIVERABLE 2: INDICATORS CALCULATED GLOBALLY BEFORE SPLITTING
+// Prevents boundary distortion, modulo shifts, and stripped EMA warm-up.
+// -------------------------------------------------------------------------
 function aggregateCandles(m5Candles, countPerBar) {
     const agg = [];
     for (let i = 0; i < m5Candles.length; i += countPerBar) {
@@ -83,29 +77,47 @@ function isRedFolderNewsWindow(date) {
     return false;
 }
 
-// Core audit function on a specific candle slice
-function runAuditOnDataset(goldM5, dxyM15, params = {}) {
+// Global, unbroken aggregation across the full 60-day dataset
+const fullM15 = aggregateCandles(allGold5m, 3);
+const fullH1  = aggregateCandles(allGold5m, 12);
+const fullDxyEma = calculateEMA(allDxy15m, 20);
+
+// Midpoint timestamp for train/test partitioning
+const startTime = allGold5m[0].time;
+const endTime = allGold5m[allGold5m.length - 1].time;
+const midTime = startTime + (endTime - startTime) / 2;
+const midIso = new Date(midTime).toISOString();
+
+console.log(`Split Point:   ${midIso}`);
+console.log(`First Half (In-Sample / Train):  ${allGold5m[0].iso} to ${midIso}`);
+console.log(`Second Half (Out-of-Sample/Test): ${midIso} to ${allGold5m[allGold5m.length - 1].iso}`);
+
+// -------------------------------------------------------------------------
+// DELIVERABLE 1: ACTIVE POSITION STATE MACHINE (POSITION LOCK)
+// Once a trade enters on a track, no new trade may trigger on that track
+// until the active trade's exitTime has passed.
+// -------------------------------------------------------------------------
+function runContinuousAudit(params = {}) {
     const {
         displacementThreshold = 3.50,
         fvgGapThreshold = 0.25,
         slBuffer = 0.70,
-        emaPeriod = 20,
         spreadDollars = 0.20,
         slippageDollars = 0.10,
-        commissionUsd = 0.07 // per trade for 0.01 lot
+        commissionUsd = 0.07
     } = params;
-
-    const m15 = aggregateCandles(goldM5, 3);
-    const h1  = aggregateCandles(goldM5, 12);
-    const dxyEma = calculateEMA(dxyM15, emaPeriod);
 
     const supremeTrades = [];
     const scalpTrades = [];
 
-    // Track 1: Supreme Cascade
-    for (let h = 5; h < h1.length - 8; h++) {
-        const curr1H = h1[h];
-        const prev1H = h1[h - 1];
+    // State Machine: Position Lock timestamps (in ms)
+    let supremeActivePositionUntil = 0;
+    let scalpActivePositionUntil = 0;
+
+    // Track 1: Supreme Cascade Engine
+    for (let h = 5; h < fullH1.length - 8; h++) {
+        const curr1H = fullH1[h];
+        const prev1H = fullH1[h - 1];
         const dt = new Date(curr1H.time);
         const hourUTC = dt.getUTCHours();
 
@@ -114,15 +126,15 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
 
         let dxyAlignedBull = true;
         let dxyAlignedBear = true;
-        const dxyIdx = dxyM15.findIndex(d => Math.abs(d.time - curr1H.time) < 15 * 60 * 1000);
-        if (dxyIdx >= 0 && dxyIdx < dxyM15.length) {
-            if (dxyM15[dxyIdx].close > dxyEma[dxyIdx] + 0.05) dxyAlignedBull = false;
-            if (dxyM15[dxyIdx].close < dxyEma[dxyIdx] - 0.05) dxyAlignedBear = false;
+        const dxyIdx = allDxy15m.findIndex(d => Math.abs(d.time - curr1H.time) < 15 * 60 * 1000);
+        if (dxyIdx >= 0 && dxyIdx < allDxy15m.length) {
+            if (allDxy15m[dxyIdx].close > fullDxyEma[dxyIdx] + 0.05) dxyAlignedBull = false;
+            if (allDxy15m[dxyIdx].close < fullDxyEma[dxyIdx] - 0.05) dxyAlignedBear = false;
         }
 
-        // Bearish Check
+        // Bearish Supreme Check
         if (curr1H.close < prev1H.low && (curr1H.high - curr1H.low) >= displacementThreshold && dxyAlignedBear) {
-            const m5Slice = goldM5.slice(prev1H.m5StartIndex, curr1H.m5EndIndex + 1);
+            const m5Slice = allGold5m.slice(prev1H.m5StartIndex, curr1H.m5EndIndex + 1);
             let freshFvg = null;
             for (let k = 1; k < m5Slice.length - 1; k++) {
                 if (m5Slice[k - 1].low > m5Slice[k + 1].high + fvgGapThreshold) {
@@ -132,13 +144,19 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
             }
 
             if (freshFvg) {
-                const futureBars = goldM5.slice(curr1H.m5EndIndex + 1, Math.min(curr1H.m5EndIndex + 144, goldM5.length));
+                const futureBars = allGold5m.slice(curr1H.m5EndIndex + 1, Math.min(curr1H.m5EndIndex + 144, allGold5m.length));
                 for (let m = 0; m < futureBars.length - 10; m++) {
                     const fc = futureBars[m];
                     if (fc.high >= freshFvg.bottom && fc.close <= freshFvg.top && fc.close < fc.open) {
-                        const execBarIndex = m + 1; // Lookahead-free fill on next bar
+                        const execBarIndex = m + 1;
                         const execBar = futureBars[execBarIndex];
                         if (!execBar) break;
+
+                        // POSITION LOCK CHECK: Is there already an active position open?
+                        if (execBar.time < supremeActivePositionUntil) {
+                            // Cannot enter: track is locked until previous trade has exited!
+                            continue;
+                        }
 
                         const fillEntry = +(execBar.open - slippageDollars).toFixed(2);
                         const slPrice = +(Math.max(fc.high, freshFvg.top) + slBuffer).toFixed(2);
@@ -156,6 +174,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                         let exitReason = 'SL_HIT';
                         let exitPrice = slPrice;
                         let exitTime = execBar.iso;
+                        let exitTimeMs = execBar.time;
 
                         for (let oc of outcome) {
                             const effectiveAskHigh = +(oc.high + spreadDollars).toFixed(2);
@@ -168,6 +187,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                 exitReason = 'TP1_PARTIAL_BE';
                                 exitPrice = tp1Price;
                                 exitTime = oc.iso;
+                                exitTimeMs = oc.time;
                             }
                             if (effectiveAskHigh >= slDyn) {
                                 if (!tp1Hit) {
@@ -175,6 +195,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                     exitReason = 'SL_HIT';
                                     exitPrice = slDyn;
                                     exitTime = oc.iso;
+                                    exitTimeMs = oc.time;
                                 }
                                 break;
                             }
@@ -183,17 +204,22 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                 exitReason = 'TP2_FULL_TARGET';
                                 exitPrice = tp2Price;
                                 exitTime = oc.iso;
+                                exitTimeMs = oc.time;
                                 break;
                             }
                         }
 
+                        // ENGAGE POSITION LOCK: Lock supreme track until this trade's exit timestamp
+                        supremeActivePositionUntil = exitTimeMs;
+
                         const dollarRisk = 10.0;
                         const pnlUsd = (rawPnlR * dollarRisk) - commissionUsd;
-                        const normalizedNetR = pnlUsd / 10.0; // Strictly normalized to $10 risk
+                        const normalizedNetR = pnlUsd / 10.0;
 
                         supremeTrades.push({
                             track: 'SUPREME',
                             id: supremeTrades.length + 1,
+                            entryTimeMs: execBar.time,
                             time: execBar.iso,
                             side: 'SELL',
                             entry: fillEntry.toFixed(2),
@@ -214,9 +240,9 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
             }
         }
 
-        // Bullish Check
+        // Bullish Supreme Check
         if (curr1H.close > prev1H.high && (curr1H.high - curr1H.low) >= displacementThreshold && dxyAlignedBull) {
-            const m5Slice = goldM5.slice(prev1H.m5StartIndex, curr1H.m5EndIndex + 1);
+            const m5Slice = allGold5m.slice(prev1H.m5StartIndex, curr1H.m5EndIndex + 1);
             let freshFvg = null;
             for (let k = 1; k < m5Slice.length - 1; k++) {
                 if (m5Slice[k + 1].low > m5Slice[k - 1].high + fvgGapThreshold) {
@@ -226,13 +252,18 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
             }
 
             if (freshFvg) {
-                const futureBars = goldM5.slice(curr1H.m5EndIndex + 1, Math.min(curr1H.m5EndIndex + 144, goldM5.length));
+                const futureBars = allGold5m.slice(curr1H.m5EndIndex + 1, Math.min(curr1H.m5EndIndex + 144, allGold5m.length));
                 for (let m = 0; m < futureBars.length - 10; m++) {
                     const fc = futureBars[m];
                     if (fc.low <= freshFvg.top && fc.close >= freshFvg.bottom && fc.close > fc.open) {
                         const execBarIndex = m + 1;
                         const execBar = futureBars[execBarIndex];
                         if (!execBar) break;
+
+                        // POSITION LOCK CHECK
+                        if (execBar.time < supremeActivePositionUntil) {
+                            continue;
+                        }
 
                         const fillEntry = +(execBar.open + spreadDollars + slippageDollars).toFixed(2);
                         const slPrice = +(Math.min(fc.low, freshFvg.bottom) - slBuffer).toFixed(2);
@@ -250,6 +281,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                         let exitReason = 'SL_HIT';
                         let exitPrice = slPrice;
                         let exitTime = execBar.iso;
+                        let exitTimeMs = execBar.time;
 
                         for (let oc of outcome) {
                             if (!tp1Hit && oc.high >= tp1Price) {
@@ -259,6 +291,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                 exitReason = 'TP1_PARTIAL_BE';
                                 exitPrice = tp1Price;
                                 exitTime = oc.iso;
+                                exitTimeMs = oc.time;
                             }
                             if (oc.low <= slDyn) {
                                 if (!tp1Hit) {
@@ -266,6 +299,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                     exitReason = 'SL_HIT';
                                     exitPrice = slDyn;
                                     exitTime = oc.iso;
+                                    exitTimeMs = oc.time;
                                 }
                                 break;
                             }
@@ -274,9 +308,13 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                                 exitReason = 'TP2_FULL_TARGET';
                                 exitPrice = tp2Price;
                                 exitTime = oc.iso;
+                                exitTimeMs = oc.time;
                                 break;
                             }
                         }
+
+                        // ENGAGE POSITION LOCK
+                        supremeActivePositionUntil = exitTimeMs;
 
                         const dollarRisk = 10.0;
                         const pnlUsd = (rawPnlR * dollarRisk) - commissionUsd;
@@ -285,6 +323,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                         supremeTrades.push({
                             track: 'SUPREME',
                             id: supremeTrades.length + 1,
+                            entryTimeMs: execBar.time,
                             time: execBar.iso,
                             side: 'BUY',
                             entry: fillEntry.toFixed(2),
@@ -306,9 +345,9 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
         }
     }
 
-    // Track 2: Range Scalps
-    for (let i = 12; i < m15.length - 16; i += 4) {
-        const boxSlice = m15.slice(i - 12, i);
+    // Track 2: Quick Sideways Range Scalps
+    for (let i = 12; i < fullM15.length - 16; i += 4) {
+        const boxSlice = fullM15.slice(i - 12, i);
         let boxHigh = -Infinity;
         let boxLow = Infinity;
         for (let b of boxSlice) {
@@ -319,7 +358,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
         if (boxSpan < 4.0 || boxSpan > 14.0) continue;
 
         const eq = +( (boxHigh + boxLow) / 2 ).toFixed(2);
-        const subBars = goldM5.slice(m15[i].m5StartIndex, Math.min(m15[i].m5StartIndex + 16, goldM5.length));
+        const subBars = allGold5m.slice(fullM15[i].m5StartIndex, Math.min(fullM15[i].m5StartIndex + 16, allGold5m.length));
 
         for (let j = 0; j < subBars.length - 4; j++) {
             const bar = subBars[j];
@@ -328,6 +367,11 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                 const execBarIndex = j + 1;
                 const execBar = subBars[execBarIndex];
                 if (!execBar) break;
+
+                // POSITION LOCK CHECK FOR SCALPS
+                if (execBar.time < scalpActivePositionUntil) {
+                    continue;
+                }
 
                 const fillEntry = +(execBar.open - slippageDollars).toFixed(2);
                 const sl = +(boxHigh + 1.20).toFixed(2);
@@ -340,6 +384,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                     let exitReason = 'SL_HIT';
                     let exitPrice = sl;
                     let exitTime = execBar.iso;
+                    let exitTimeMs = execBar.time;
 
                     for (let sc of outcome) {
                         const effectiveAskHigh = +(sc.high + spreadDollars).toFixed(2);
@@ -350,6 +395,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                             exitReason = 'SL_HIT';
                             exitPrice = sl;
                             exitTime = sc.iso;
+                            exitTimeMs = sc.time;
                             break;
                         }
                         if (effectiveAskLow <= tp) {
@@ -357,17 +403,21 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                             exitReason = 'TP_EQUILIBRIUM';
                             exitPrice = tp;
                             exitTime = sc.iso;
+                            exitTimeMs = sc.time;
                             break;
                         }
                     }
 
+                    scalpActivePositionUntil = exitTimeMs;
+
                     const dollarRisk = 5.0; // $5 risk on scalps
                     const pnlUsd = (rawPnlR * dollarRisk) - commissionUsd;
-                    const normalizedNetR = pnlUsd / 10.0; // Unified $10 risk base
+                    const normalizedNetR = pnlUsd / 10.0;
 
                     scalpTrades.push({
                         track: 'SCALP',
                         id: scalpTrades.length + 1,
+                        entryTimeMs: execBar.time,
                         time: execBar.iso,
                         side: 'SELL',
                         entry: fillEntry.toFixed(2),
@@ -392,6 +442,11 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                 const execBar = subBars[execBarIndex];
                 if (!execBar) break;
 
+                // POSITION LOCK CHECK FOR SCALPS
+                if (execBar.time < scalpActivePositionUntil) {
+                    continue;
+                }
+
                 const fillEntry = +(execBar.open + spreadDollars + slippageDollars).toFixed(2);
                 const sl = +(boxLow - 1.20).toFixed(2);
                 const tp = eq;
@@ -403,6 +458,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                     let exitReason = 'SL_HIT';
                     let exitPrice = sl;
                     let exitTime = execBar.iso;
+                    let exitTimeMs = execBar.time;
 
                     for (let sc of outcome) {
                         if (sc.low <= sl) {
@@ -410,6 +466,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                             exitReason = 'SL_HIT';
                             exitPrice = sl;
                             exitTime = sc.iso;
+                            exitTimeMs = sc.time;
                             break;
                         }
                         if (sc.high >= tp) {
@@ -417,9 +474,12 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                             exitReason = 'TP_EQUILIBRIUM';
                             exitPrice = tp;
                             exitTime = sc.iso;
+                            exitTimeMs = sc.time;
                             break;
                         }
                     }
+
+                    scalpActivePositionUntil = exitTimeMs;
 
                     const dollarRisk = 5.0;
                     const pnlUsd = (rawPnlR * dollarRisk) - commissionUsd;
@@ -428,6 +488,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
                     scalpTrades.push({
                         track: 'SCALP',
                         id: scalpTrades.length + 1,
+                        entryTimeMs: execBar.time,
                         time: execBar.iso,
                         side: 'BUY',
                         entry: fillEntry.toFixed(2),
@@ -448,7 +509,7 @@ function runAuditOnDataset(goldM5, dxyM15, params = {}) {
         }
     }
 
-    const allTrades = [...supremeTrades, ...scalpTrades].sort((a, b) => new Date(a.time) - new Date(b.time));
+    const allTrades = [...supremeTrades, ...scalpTrades].sort((a, b) => a.entryTimeMs - b.entryTimeMs);
     return allTrades;
 }
 
@@ -480,31 +541,26 @@ function summarize(name, list) {
     };
 }
 
-// Prepare subsets
-const trainGold = allGold5m.filter(c => c.time <= midTime);
-const testGold = allGold5m.filter(c => c.time > midTime);
-const trainDxy = allDxy15m.filter(c => c.time <= midTime);
-const testDxy = allDxy15m.filter(c => c.time > midTime);
+// -------------------------------------------------------------------------
+// EXECUTION: UNBROKEN CONTINUOUS AUDIT ACROSS FULL 60 DAYS
+// Partition strictly by entry timestamp (entryTimeMs <= midTime vs > midTime)
+// -------------------------------------------------------------------------
+const allTrades = runContinuousAudit();
 
-// 1. Run First Half (Train / In-Sample)
-const trainTrades = runAuditOnDataset(trainGold, trainDxy);
+const trainTrades = allTrades.filter(t => t.entryTimeMs <= midTime);
+const testTrades  = allTrades.filter(t => t.entryTimeMs > midTime);
+
 exportCsv(CSV_TRAIN, trainTrades);
-
-// 2. Run Second Half (Test / Out-of-Sample) UNTOUCHED
-const testTrades = runAuditOnDataset(testGold, testDxy);
 exportCsv(CSV_TEST, testTrades);
-
-// 3. Run Full Combined 60-Day Dataset
-const fullTrades = runAuditOnDataset(allGold5m, allDxy15m);
-exportCsv(CSV_COMBINED, fullTrades);
+exportCsv(CSV_COMBINED, allTrades);
 
 console.log(`\n================================================================================`);
-console.log(`TRAIN VS TEST OUT-OF-SAMPLE AUDIT RESULTS:`);
+console.log(`CORRECTED TRAIN VS TEST OUT-OF-SAMPLE AUDIT (POSITION LOCK + CONTINUOUS INDICATORS)`);
 console.log(`================================================================================`);
 console.table([
     summarize('First Half (Train / In-Sample: Jul 06 - Aug 10)', trainTrades),
     summarize('Second Half (Test / Out-of-Sample: Aug 10 - Sep 14)', testTrades),
-    summarize('👑 FULL COMBINED 60-DAY DATASET (Jul 06 - Sep 14)', fullTrades)
+    summarize('👑 FULL UNBROKEN 60-DAY RUN (Jul 06 - Sep 14)', allTrades)
 ]);
 
 console.log(`\nDetailed CSV Ledgers Exported:`);
