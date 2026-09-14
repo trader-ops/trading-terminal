@@ -903,7 +903,7 @@ async function fetchLiveMarketData() {
 let currentSelectedAsset = "XAUUSD";
 let currentInterval = "5";
 let eventSecondsRemaining = 12 * 3600 + 40 * 60;
-var CURRENT_PIPELINE_INDEX = 4; // Trade #1, #2, #4 Won! Trade #3 Stopped (-45p). Trade #5 ($4,386 Reversal Buy) is ACTIVE
+var CURRENT_PIPELINE_INDEX = -1; // Standby Scanning Mode (Waiting for 4H Trend Anchor + 1H Displacement)
 var AUTO_SHIFT_TRADES_ENABLED = true;
 
 // DYNAMIC INSTITUTIONAL TARGET ENGINE (MAX 1:10 CAP • AUTO-CALCULATED VIA STRUCTURE)
@@ -916,8 +916,9 @@ function calculateStructuralTarget(entry, sl, direction, assetKey) {
     let dynamicRr = 5.0; // Default healthy swing
 
     if (isGold) {
-        // High-impact sweep: Distance to opposite pool (Day Low SSL $4,385.42)
-        const targetPool = isBull ? 4482.00 : 4385.42;
+        // High-impact sweep: Distance to opposite pool
+        const cp = (assetKey === "XAUUSD" && ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : entry;
+        const targetPool = isBull ? (cp + 35.0) : (cp - 35.0);
         const poolDistance = Math.abs(entry - targetPool);
         dynamicRr = +(poolDistance / risk).toFixed(1);
     } else {
