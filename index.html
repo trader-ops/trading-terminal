@@ -128,7 +128,7 @@
                     <span id="omniActiveNewsText">⚡ Live Institutional Order Flow • 👑 1–2 Prime Setups / Week • 4H Trend Anchor Engine Active</span> • ⏳ Session: <strong>Live Liquidity Scan</strong>
                 </div>
                 <div class="occs-right">
-                    <span class="occs-pill">👑 <strong>1–2 Setups / Wk</strong> • Edge: <strong>2.46 PF / 66.7% WR</strong></span>
+                    <span class="occs-pill">👑 <strong>1–2 Setups / Wk</strong> • Edge: <strong>1.33 PF / 48.8% WR (+7.32R)</strong></span>
                     <span class="occs-pill">🛡️ Risk: <strong>2% Per Trade ($10 Base)</strong></span>
                 </div>
             </div>
@@ -139,12 +139,12 @@
             <div class="cockpit-segmented-tabs" id="cockpitSegmentedTabs">
                 <button type="button" class="cockpit-tab-btn active" id="btnTabMainSetup" onclick="switchTradingCockpitTab('main')">
                     <span style="font-size:1.15rem;">👑</span>
-                    <span>1. TRACK 1: SUPREME INSTITUTIONAL SETUPS (4H Trend Anchor • +4.64R • 72.7% WR)</span>
+                    <span>1. TRACK 1: SUPREME INSTITUTIONAL SETUPS (4H Trend Anchor • +7.32R • 48.8% WR • 1.33 PF)</span>
                     <span class="tab-pill-badge main">SUPREME PIPELINE</span>
                 </button>
                 <button type="button" class="cockpit-tab-btn" id="btnTabQuickScalp" onclick="switchTradingCockpitTab('scalp')">
                     <span style="font-size:1.15rem;">⚡</span>
-                    <span>2. TRACK 2 SCALPS (QUARANTINED • -0.86R / 33.3% WR)</span>
+                    <span>2. TRACK 2 SCALPS (QUARANTINED • +0.25R / 46.7% WR)</span>
                     <span class="tab-pill-badge scalp" style="background:rgba(239,68,68,0.2); color:#ef4444; border-color:#ef4444;">QUARANTINED (-0.86R)</span>
                 </button>
             </div>
@@ -234,7 +234,7 @@
                                 🛡️ 2% Risk Per Trade ($10 Base) • 1.5R Partial + Breakeven Lock
                             </span>
                             <span style="background:rgba(245,158,11,0.15); border:1px solid #fbbf24; color:#fbbf24; font-family:var(--font-mono); font-size:0.72rem; font-weight:800; padding:3px 8px; border-radius:4px;">
-                                🔥 Verified Out-of-Sample: 66.7% Win Rate • 2.46 Profit Factor
+                                🔥 Verified Out-of-Sample: 48.8% Win Rate • 1.33 Profit Factor (+7.32R Net Edge)
                             </span>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -259,7 +259,7 @@
                                 <button type="button" class="btn-copy-cockpit" id="btnCopyCockpitOrder" onclick="copyCockpitOrder()" title="Copy active order parameters (Entry, SL, TP) to MT5 clipboard" style="background:rgba(0,245,155,0.15); border:1.5px solid #00f59b; color:#00f59b; font-family:var(--font-mono); font-weight:900; font-size:0.8rem; padding:7px 16px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;">
                                     <span>📋 COPY ORDER TO MT5</span>
                                 </button>
-                                <span id="macWinProbBadge" style="background:rgba(0,245,155,0.15); border:1px solid rgba(0,245,155,0.4); color:#00f59b; font-size:0.75rem; font-weight:900; font-family:var(--font-mono); padding:5px 10px; border-radius:6px;">👑 QUANT REGIME: 66.7% WR / 2.46 PF</span>
+                                <span id="macWinProbBadge" style="background:rgba(0,245,155,0.15); border:1px solid rgba(0,245,155,0.4); color:#00f59b; font-size:0.75rem; font-weight:900; font-family:var(--font-mono); padding:5px 10px; border-radius:6px;">👑 QUANT REGIME: 48.8% WR / 1.33 PF (+7.32R)</span>
                             </div>
                         </div>
 
@@ -721,7 +721,7 @@
                                     🎯 Targets: 1.5R Partial Lock ➔ 3.5R Macro Runner
                                 </span>
                                 <span class="omni-rr-badge-highlight" id="omniTopRrBadge" style="font-size:0.80rem; font-family:var(--font-mono); font-weight:900; background:linear-gradient(90deg, rgba(14,165,233,0.2) 0%, rgba(16,185,129,0.2) 100%); color:#38bdf8; border:1.5px solid #0284c7; padding:4px 10px; border-radius:6px;">
-                                    ⚖️ 66.7% WR • 2.46 PF
+                                    ⚖️ 48.8% WR • 1.33 PF (+7.32R)
                                 </span>
                                 <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">Live TradingView:</span>
                                 <strong style="color:var(--color-cyan); font-size:1.05rem; font-family:var(--font-mono);" id="omniLivePrice">Streaming...</strong>
@@ -2162,7 +2162,7 @@
                 </div>
                 <div class="asm-right">
                     <span class="asm-status-pill" id="activeTradeStatusPill" style="background:rgba(0,245,155,0.2); color:var(--color-green); border:1px solid var(--color-green);">
-                        👑 10 WINS LOCKED • 7 LOSSES (58.8% FULL / 72.7% SUPREME) • 100% AUDIT-VERIFIED
+                        👑 21 WINS LOCKED • 22 LOSSES (48.8% SUPREME WR / 1.33 PF) • 100% AUDIT-VERIFIED
                     </span>
                     <button class="btn-section-refresh highlight-btn" onclick="autoDetectAndSyncPipelineToJournal()" id="btnSyncActiveTrade">
                         <span>⚡ AUTO-DETECT PIPELINE</span>
@@ -2308,7 +2308,7 @@
         </footer>
     </div>
 
-    <script src="js/app.js?v=1789243000"></script>
+    <script src="js/app.js?v=1789255000"></script>
 
     <script>
     // Immediate Clock Runner (Never shows --:--:--)
