@@ -277,7 +277,31 @@ function updateOmniNewsPillar(isBear = true) {
             omniNewsProtocol.innerText = "🟡 FinancialJuice Wire: Yellow Clean Flow (Zero Red Trap)";
         }
     }
+    updateRedFolderShield();
 }
+
+function updateRedFolderShield() {
+    const pill = document.getElementById("redFolderStatusPill");
+    if (!pill) return;
+    const now = new Date();
+    const h = now.getUTCHours();
+    const m = now.getUTCMinutes();
+    
+    // Check if within 15-20 min window of high impact US news (12:15 to 13:45 UTC or 17:45 to 19:15 UTC)
+    const isRedWindow = ((h === 12 && m >= 15) || (h === 13 && m <= 45) || (h === 17 && m >= 45) || (h === 18) || (h === 19 && m <= 15));
+    if (isRedWindow) {
+        pill.style.background = "rgba(239, 68, 68, 0.25)";
+        pill.style.borderColor = "var(--color-red)";
+        pill.style.color = "#fca5a5";
+        pill.innerHTML = `🔴 RED FOLDER SHIELD: 15M FREEZE ACTIVE (CAPITAL PROTECTED)`;
+    } else {
+        pill.style.background = "rgba(0, 245, 155, 0.15)";
+        pill.style.borderColor = "rgba(0, 245, 155, 0.4)";
+        pill.style.color = "var(--color-green)";
+        pill.innerHTML = `🟢 CLEAN ORDER FLOW: 1H➔5M CASCADE ACTIVE (SAFE)`;
+    }
+}
+window.updateRedFolderShield = updateRedFolderShield;
 
 function renderAutonomousFeed() {
     const container = document.getElementById("breakingFeedGrid");
