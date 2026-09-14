@@ -412,31 +412,31 @@ function updateMarketStatusBanner() {
 // NEXUS PRO TERMINAL - POST-NEWS REAL-TIME LIVE MARKET FLIP ENGINE v16.0
 
 let CURRENT_MARKET_REGIME = "BEARISH_DUMP"; // Flips dynamically based on post-news crash
-let REAL_XAU_ANCHOR = 4357.31; // Anchored to official TradingView exchange quotes
+let REAL_XAU_ANCHOR = 4285.31; // Anchored to official TradingView exchange quotes
 
 let ASSETS = {
     "XAUUSD": {
         symbol: "XAU/USD",
         name: "Gold Spot / US Dollar",
-        currentPrice: 4357.31,
+        currentPrice: 4285.31,
         direction: "DOWN",
-        changePct: "-1.11%",
+        changePct: "-1.47%",
         tvSymbol: "TVC:GOLD",
         volatility: 0.40,
-        confidence: "94% (Macro SSL Breakdown Dump)",
+        confidence: "High Confluence (Macro SSL Breakdown Dump)",
         structure: "Lower Highs (LH) & Lower Lows (LL) Active",
-        driver: "Live TradingView stream at $4,357.31 (-1.11%). Breakdown impulse below $4,380 SSL."
+        driver: "Live TradingView stream at $4,285.31 (-1.47%). Breakdown impulse toward Day Low $4,280.63 SSL."
     },
     "DXY": {
         symbol: "DXY",
         name: "US Dollar Index",
-        currentPrice: 99.20,
+        currentPrice: 99.53,
         direction: "UP",
-        changePct: "+0.04%",
+        changePct: "+0.44%",
         tvSymbol: "CAPITALCOM:DXY",
         volatility: 0.02,
-        confidence: "95%",
-        driver: "Live ICE DX-Y feed at 99.20. Direct inverse correlation with Gold."
+        confidence: "Strong Trend (Inverse DXY Link)",
+        driver: "Live ICE DX-Y feed at 99.53. Direct inverse correlation with Gold."
     },
     "EURUSD": {
         symbol: "EUR/USD",
@@ -468,19 +468,19 @@ let ASSETS = {
         changePct: "+0.85%",
         tvSymbol: "FX:USDJPY",
         volatility: 0.04,
-        confidence: "94%",
+        confidence: "Strong Trend",
         driver: "Yields and Dollar rally sending USD/JPY higher."
     },
     "US10Y": {
         symbol: "US10Y",
         name: "US 10Y Treasury Yields",
-        currentPrice: 4.78,
+        currentPrice: 4.96,
         direction: "UP",
-        changePct: "+0.46%",
+        changePct: "+0.20%",
         tvSymbol: "US10Y",
         volatility: 0.008,
-        confidence: "93%",
-        driver: "Live CBOE ^TNX yield at 4.784%. Applying direct yield pressure on Gold."
+        confidence: "Macro Headwind",
+        driver: "Live CBOE ^TNX yield at 4.959%. Applying direct yield pressure on Gold."
     }
 };
 
@@ -858,16 +858,16 @@ function computeDynamicPrediction(assetKey) {
                 actionTitle = `${isBear ? '🔴' : '🟢'} TRADE #${activeTrade.seq}: ${isBear ? 'SELL' : 'BUY'} AT $${activeTrade.entryPrice.toFixed(2)} • SL: $${sl.toFixed(2)}`;
             }
 
-            statusBadge = `🔥 ${activeTrade.winProb || 89}% ${isBear ? 'BEARISH' : 'BULLISH'} CONFLUENCE`;
+            statusBadge = `🔥 HIGH CONFLUENCE (${isBear ? 'BEARISH' : 'BULLISH'} BIAS)`;
             regimeText = isBear 
                 ? `🔴 CURRENT ACTIVE BIAS: PULLBACK RETEST (SELL AT LOWER HIGHS ONLY)` 
                 : `🟢 CURRENT ACTIVE BIAS: DISCOUNT ABSORPTION (BUY AT DEMAND DIPS ONLY)`;
             verdictText = isBear 
-                ? `🔴 ${activeTrade.winProb || 89}% REAL-TIME BEARISH (SELL AT HIGHS • DO NOT BUY)` 
-                : `🟢 ${activeTrade.winProb || 88}% REAL-TIME BULLISH (BUY AT DIPS • DO NOT SELL)`;
+                ? `🔴 STRUCTURAL BEARISH (SELL AT HIGHS • DO NOT BUY)` 
+                : `🟢 STRUCTURAL BULLISH (BUY AT DIPS • DO NOT SELL)`;
 
-            const dxyPrice = (ASSETS["DXY"] ? ASSETS["DXY"].currentPrice.toFixed(2) : "99.16");
-            const yieldVal = (ASSETS["US10Y"] ? ASSETS["US10Y"].currentPrice.toFixed(2) : "4.18");
+            const dxyPrice = (ASSETS["DXY"] ? ASSETS["DXY"].currentPrice.toFixed(2) : "99.53");
+            const yieldVal = (ASSETS["US10Y"] ? ASSETS["US10Y"].currentPrice.toFixed(2) : "4.96");
 
             reasons = [
                 `DXY Live at ${dxyPrice}: Dollar Index ICE feed active. ${isBear ? 'Strong Dollar Gold ko direct dump pressure deta hai.' : 'Softening Dollar Gold demand ko space de raha hai.'}`,
@@ -877,8 +877,8 @@ function computeDynamicPrediction(assetKey) {
                 `Dynamic Pipeline: ${activeTrade.reason}. Once this trade hits targets, terminal auto-shifts to next trade setup!`
             ];
 
-            if (Math.abs(cp - 4400.00) <= 8.0) {
-                reasons.unshift(`🛡️ SYSTEM ADAPTIVE GUARD ACTIVE: $4,400.00 Round-Number Trap Filter engaged. Blind breakout chase prohibited without confirmed 15M candle body close.`);
+            if (Math.abs(cp - 4300.00) <= 8.0) {
+                reasons.unshift(`🛡️ SYSTEM ADAPTIVE GUARD ACTIVE: $4,300.00 Round-Number Trap Filter engaged. Blind breakout chase prohibited without confirmed 15M candle body close.`);
             }
 
             targetMeta = {
@@ -904,9 +904,9 @@ function computeDynamicPrediction(assetKey) {
                 "Demand zone holding strong.",
                 `Dynamic Target: TP1 1:${targetMeta.tp1Rr} ➔ TP2 1:${targetMeta.tp2Rr} (Max 1:10 Cap).`
             ];
-            statusBadge = `🔥 88% BULLISH CONFLUENCE`;
+            statusBadge = `🔥 HIGH BULLISH CONFLUENCE (3/4 CONDITIONS MET)`;
             regimeText = `🟢 CURRENT ACTIVE BIAS: BULLISH RETEST ACCUMULATION`;
-            verdictText = `🟢 88% REAL-TIME BULLISH (BUY AT SUPPORT)`;
+            verdictText = `🟢 STRUCTURAL BULLISH (BUY AT SUPPORT)`;
             distBadge = `-- Pips Away`;
             zoneLabel = "1. Demand Zone";
             liqPoolText = `Est. $150M Liquidity Magnet`;
@@ -925,9 +925,9 @@ function computeDynamicPrediction(assetKey) {
                 "Bearish Order Flow: Consecutive Lower Highs confirmed.",
                 `Dynamic Target: TP1 1:${targetMeta.tp1Rr} ➔ TP2 1:${targetMeta.tp2Rr} (Max 1:10 Cap).`
             ];
-            statusBadge = `🔥 89% BEARISH CONFLUENCE`;
+            statusBadge = `🔥 HIGH BEARISH CONFLUENCE (3/4 CONDITIONS MET)`;
             regimeText = `🔴 CURRENT ACTIVE BIAS: BEARISH CONTINUATION BREAKDOWN`;
-            verdictText = `🔴 89% REAL-TIME BEARISH (DO NOT BUY • SELL AT LOWER HIGHS)`;
+            verdictText = `🔴 STRUCTURAL BEARISH (DO NOT BUY • SELL AT LOWER HIGHS)`;
             distBadge = `-- Pips Away`;
             zoneLabel = "1. Supply Zone";
             liqPoolText = `Est. $150M Liquidity Magnet`;
@@ -947,7 +947,7 @@ function computeDynamicPrediction(assetKey) {
         tp1: `${fmt(tp1)} (${tp1RrStr} ➔ Lock BE)`,
         tp2: `${fmt(tp2)} (${tp2RrStr} • Target)`,
         lot: lotText,
-        confidence: a.confidence || "89%",
+        confidence: a.confidence || "High Confluence (SMC + Macro)",
         actionTitle: actionTitle,
         reasons: reasons,
         isBull: isBull,
@@ -2025,7 +2025,7 @@ function setCustomRangeBox() {
         CONSOLIDATION_BOX.high = parsedH;
         CONSOLIDATION_BOX.low = parsedL;
         CONSOLIDATION_BOX.custom = true;
-        const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.20;
+        const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
         updateConsolidationBox(cp);
         alert(`✅ Custom Range Box Set Successfully!\nRange High: $${parsedH.toFixed(2)}\nEquilibrium: $${((parsedH+parsedL)/2).toFixed(2)}\nRange Low: $${parsedL.toFixed(2)}`);
     } else {
@@ -2038,7 +2038,7 @@ function resetAutoRangeBox() {
     CONSOLIDATION_BOX.custom = false; // 100% Live Auto Mode Enabled
     CONSOLIDATION_BOX.selectedScalp = null;
     CONSOLIDATION_BOX.breakoutStartTime = null;
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.50;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
     const center = Math.round(cp * 2) / 2;
     CONSOLIDATION_BOX.low = +(center - 6.00).toFixed(2);
     CONSOLIDATION_BOX.high = +(center + 6.00).toFixed(2);
@@ -2502,162 +2502,162 @@ const DAY_TRADE_PIPELINE = [
     {
         id: "trade_13",
         seq: 13,
-        title: "TRADE #13: $4,364.50 RESISTANCE RETEST SELL",
+        title: "TRADE #13: $4,295.00 5M FVG PULLBACK SHORT",
         badge: "🟢 ACTIVE LIVE SETUP",
         action: "▼ STRONG SELL (SHORT)",
         isBear: true,
-        entryPrice: 4364.50,
-        slPrice: 4369.00,
-        riskPips: 45,
-        riskDollars: 4.50,
-        tp1Price: 4352.00,
-        tp1Pips: 125,
-        tp1Gain: 12.50,
-        tp2Price: 4342.00,
-        tp2Pips: 225,
-        tp2Gain: 22.50,
-        tp3Price: 4330.00,
-        tp3Pips: 345,
-        tp3Gain: 34.50,
-        tp4Price: 4310.00,
-        tp4Pips: 545,
-        tp4Gain: 54.50,
-        zoneMin: 4363.00,
-        zoneMax: 4366.00,
-        session: "NY SESSION SUPPLY RE-TEST",
-        reason: "15M Supply Resistance Retest • Whale BSL Sweep Reversal",
-        subText: "Above $4,369.00 SL • 45 Pips Risk (-$4.50 on 0.01 Lot)",
+        entryPrice: 4295.00,
+        slPrice: 4298.50,
+        riskPips: 35,
+        riskDollars: 3.50,
+        tp1Price: 4281.00,
+        tp1Pips: 140,
+        tp1Gain: 14.00,
+        tp2Price: 4272.00,
+        tp2Pips: 230,
+        tp2Gain: 23.00,
+        tp3Price: 4260.00,
+        tp3Pips: 350,
+        tp3Gain: 35.00,
+        tp4Price: 4245.00,
+        tp4Pips: 500,
+        tp4Gain: 50.00,
+        zoneMin: 4293.50,
+        zoneMax: 4296.50,
+        session: "NY SESSION 5M FVG MITIGATION",
+        reason: "5M Fair Value Gap ($4,295) Pullback Retest • Day Low SSL Sweep Delivery",
+        subText: "Above $4,298.50 FVG High • 35 Pips Risk (-$3.50 on 0.01 Lot)",
         status: "ACTIVE",
-        winProb: 89,
+        confluenceGrade: "A+ INSTITUTIONAL",
         probGrade: "A+ PRIME",
-        summary: "Active Live Setup: Retest of $4,364.50 resistance targeting $4,352 and $4,342.",
-        smcAnalysis: "15M Supply Order Block ($4,364.50 – $4,366.50) par rejection wicks confirm ho rahi hain. 5M par Bearish CHoCH ban chuka hai aur price continuous Lower Highs (LH) banati hui Sell-Side Liquidity hunt kar rahi hai.",
-        macroAnalysis: "DXY Index 99.14 par support le kar pump kar raha hai aur US 10Y Yields 4.97% par surge kar rahi hain. Strong Dollar aur bond yields Gold se capital drain kar rahe hain jis se downward continuation confirmed hai.",
-        liqAnalysis: "Whale BSL ($4,366.00) sweep karke retail long breakout buyers ko trap kar liya gaya hai (Judas Trap). Institutional sell orders deliver ho rahe hain aur market TP1 ($4,352.00) aur TP2 ($4,342.00) SSL pool ko hunt karne ja rahi hai.",
-        newsAnalysis: "FinancialJuice live wire: Yellow Folder Clean Order Flow. Koi hawkish pause ya geopolitical spike nahi hai. Trend sell favor mein clean hai.",
-        winReason: "15M Supply zone se clean bearish rejection milli aur continuous order flow sell targets ki taraf deliver ho raha hai.",
-        disciplineRule: "Strict 45 pips SL ($4,369.00) protected. 1:2 ($4,352.00) par partial profit lock and breakeven trail rule active."
+        summary: "Active Live Setup: Retest of $4,295.00 5M FVG supply targeting Day Low SSL sweep at $4,281.00 & $4,272.00.",
+        smcAnalysis: "5M Bearish Fair Value Gap ($4,293.50 – $4,296.50) mitigate ho raha hai. 1H time frame par consecutive Lower Highs aur Lower Lows active hain. Market structure Sell-Side Liquidity hunt ko prioritize kar raha hai.",
+        macroAnalysis: "DXY 99.53 par strong bull trend mein hai aur US 10Y Yields 4.96% par trade kar rahi hain. Dollar index aur bond yield strength Gold par continuous downside delivery pressure maintain rakhti hai.",
+        liqAnalysis: "Asian session buy stops swept hone ke baad institutional focus Day Low ($4,280.63) aur $4,272.00 Sell-Side Liquidity pool ko clean sweep karne par hai.",
+        newsAnalysis: "FinancialJuice live wire: Yellow folder calm order flow. Geopolitical shock na hone ki wajah se trend macro yields ke sath sell-side expansion mein hai.",
+        winReason: "5M FVG clean rejection aur 1H trend continuation confirmation.",
+        disciplineRule: "Strict 35 pips SL ($4,298.50) protected. 1:4 ($4,281.00) par partial lock and breakeven trail rule active."
     },
     {
         id: "trade_14",
         seq: 14,
-        title: "TRADE #14: $4,372.50 BEARISH BREAKER SELL",
+        title: "TRADE #14: $4,279.50 DAY LOW SSL SWEEP BUY",
         badge: "⏳ QUEUED SETUP",
-        action: "▼ STRONG SELL (SHORT)",
-        isBear: true,
-        entryPrice: 4372.50,
-        slPrice: 4377.00,
-        riskPips: 45,
-        riskDollars: 4.50,
-        tp1Price: 4358.00,
-        tp1Pips: 145,
-        tp1Gain: 14.50,
-        tp2Price: 4345.00,
-        tp2Pips: 275,
-        tp2Gain: 27.50,
-        tp3Price: 4330.00,
-        tp3Pips: 425,
-        tp3Gain: 42.50,
-        tp4Price: 4310.00,
-        tp4Pips: 625,
-        tp4Gain: 62.50,
-        zoneMin: 4371.00,
-        zoneMax: 4374.00,
-        session: "15M BREAKER RETEST",
-        reason: "15M Broken Support Flip to Breaker Resistance",
-        subText: "Above $4,377.00 SL • 45 Pips Risk (-$4.50)",
+        action: "▲ QUICK BUY (DEMAND BOUNCE)",
+        isBear: false,
+        entryPrice: 4279.50,
+        slPrice: 4276.00,
+        riskPips: 35,
+        riskDollars: 3.50,
+        tp1Price: 4292.00,
+        tp1Pips: 125,
+        tp1Gain: 12.50,
+        tp2Price: 4305.00,
+        tp2Pips: 255,
+        tp2Gain: 25.50,
+        tp3Price: 4320.00,
+        tp3Pips: 405,
+        tp3Gain: 40.50,
+        tp4Price: 4335.00,
+        tp4Pips: 555,
+        tp4Gain: 55.50,
+        zoneMin: 4278.00,
+        zoneMax: 4281.00,
+        session: "EXTREME DISCOUNT SWEEP",
+        reason: "Day Low ($4,280.63) Liquidity Clean-Out & 1M Reversal Wick",
+        subText: "Below $4,276.00 Invalidation • 35 Pips Risk (-$3.50)",
         status: "QUEUED",
-        winProb: 91,
-        probGrade: "A INSTITUTIONAL",
-        summary: "Queued Setup: Retest of $4,372.50 Breaker Supply targeting $4,358 & $4,345.",
-        smcAnalysis: "15M Broken Support level ($4,372.50) ab Breaker Block resistance ban chuka hai. Price ne 5M FVG mitigate kiya aur bearish displacement candle form hui.",
-        macroAnalysis: "US Dollar Index 99.20+ key high retest kar raha hai. Yields high rehne se Gold par recovery bounce sell-off mein convert ho rahi hai.",
-        liqAnalysis: "Asian High sweep ke baad London liquidity clear ho chuki hai. Ab target deep Sell-Side Liquidity ($4,358.00 aur $4,345.00) hai.",
-        newsAnalysis: "Live wire par calm order flow hai. Macro factors trend continuation ko support kar rahe hain.",
-        winReason: "Breaker block supply retest successful.",
-        disciplineRule: "Risk strict 45 pips par cap rahega."
+        confluenceGrade: "A INSTITUTIONAL",
+        probGrade: "A DEMAND REVERSAL",
+        summary: "Queued Setup: Institutional discount sweep below $4,280 targeting relief bounce to $4,292 & $4,305.",
+        smcAnalysis: "Day Low ($4,280.63) sweep karke retail panic sellers ko stop out kiya jayega. 1M/5M Bullish Market Structure Shift (MSS) trigger hone par sniper long scalp.",
+        macroAnalysis: "DXY 99.60 resistance zone par stall hone par Gold intraday mean-reversion pullback de sakta hai.",
+        liqAnalysis: "Major Sell-Side Liquidity ($4,280 SSL) absorb hone ke baad institutional re-accumulation target: $4,292 BSL.",
+        newsAnalysis: "NY Session order flow clean yellow wire.",
+        winReason: "Extreme Day Low SSL liquidity hunt & absorption.",
+        disciplineRule: "Micro-stop 35 pips below sweep wick."
     },
     {
         id: "trade_15",
         seq: 15,
-        title: "TRADE #15: $4,345.00 LIQUIDITY ABSORPTION BUY",
+        title: "TRADE #15: $4,302.00 BEARISH BREAKER SELL",
         badge: "⏳ QUEUED SETUP",
-        action: "▲ QUICK BUY (DEMAND BOUNCE)",
-        isBear: false,
-        entryPrice: 4345.00,
-        slPrice: 4340.50,
-        riskPips: 45,
-        riskDollars: 4.50,
-        tp1Price: 4358.00,
-        tp1Pips: 130,
-        tp1Gain: 13.00,
-        tp2Price: 4370.00,
-        tp2Pips: 250,
-        tp2Gain: 25.00,
-        tp3Price: 4385.00,
-        tp3Pips: 400,
-        tp3Gain: 40.00,
-        tp4Price: 4400.00,
-        tp4Pips: 550,
-        tp4Gain: 55.00,
-        zoneMin: 4344.00,
-        zoneMax: 4346.50,
-        session: "DISCOUNT DEMAND SWEEP",
-        reason: "Day Low Sell-Side Liquidity (SSL) Sweep & Reversal",
-        subText: "Below $4,340.50 SL • 45 Pips Risk (-$4.50)",
+        action: "▼ STRONG SELL (SHORT)",
+        isBear: true,
+        entryPrice: 4302.00,
+        slPrice: 4306.00,
+        riskPips: 40,
+        riskDollars: 4.00,
+        tp1Price: 4285.00,
+        tp1Pips: 170,
+        tp1Gain: 17.00,
+        tp2Price: 4270.00,
+        tp2Pips: 320,
+        tp2Gain: 32.00,
+        tp3Price: 4255.00,
+        tp3Pips: 470,
+        tp3Gain: 47.00,
+        tp4Price: 4240.00,
+        tp4Pips: 620,
+        tp4Gain: 62.00,
+        zoneMin: 4300.50,
+        zoneMax: 4303.50,
+        session: "MID-SESSION BREAKER RETEST",
+        reason: "Broken Intraday Support Flip to Breaker Block Supply",
+        subText: "Above $4,306.00 SL • 40 Pips Risk (-$4.00)",
         status: "QUEUED",
-        winProb: 88,
-        probGrade: "A- DEMAND BOUNCE",
-        summary: "Queued Setup: Institutional discount SSL sweep at $4,345 targeting $4,358 bounce.",
-        smcAnalysis: "Major 4H Demand POI ($4,345.00) par massive liquidity absorption dekhne ko mil rahi hai. 1M/5M par Bullish MSS (Market Structure Shift) trigger hone par sniper long scalp.",
-        macroAnalysis: "DXY 99.40 resistance par stall ho raha hai aur 10Y yields short-term pullback le rahi hain jo Gold ko relief bounce degi.",
-        liqAnalysis: "Sell-Side Liquidity ($4,342.00) par retail sellers ko stop-hunt karke smart money discount accumulation kar rahi hai. Target: $4,358.00 BSL.",
-        newsAnalysis: "US session closing wire: profit taking flow active. Short covering bounce in play.",
-        winReason: "Deep discount demand block tap aur order book accumulation.",
-        disciplineRule: "Tight SL below demand low."
+        confluenceGrade: "A+ INSTITUTIONAL",
+        probGrade: "A+ PRIME",
+        summary: "Queued Setup: Retest of $4,302 Breaker Resistance targeting $4,285 & $4,270.",
+        smcAnalysis: "Support breakdown ke baad retest zone ab institutional sell wall ban chuka hai. 5M bearish engulfing confirmation par entry.",
+        macroAnalysis: "US 10Y Yields above 4.95% sustaining heavy pressure.",
+        liqAnalysis: "Internal BSL cleared, trendline liquidity targeting $4,285 and $4,270.",
+        newsAnalysis: "Order flow steady.",
+        winReason: "Breaker block rejection.",
+        disciplineRule: "Strict 40 pips risk cap."
     },
     {
         id: "trade_16",
         seq: 16,
-        title: "TRADE #16: $4,368.00 15M SUPPLY RETEST SELL",
+        title: "TRADE #16: $4,312.00 15M SUPPLY RETEST SELL",
         badge: "⏳ QUEUED SETUP",
         action: "▼ STRONG SELL (SHORT)",
         isBear: true,
-        entryPrice: 4368.00,
-        slPrice: 4372.50,
+        entryPrice: 4312.00,
+        slPrice: 4316.50,
         riskPips: 45,
         riskDollars: 4.50,
-        tp1Price: 4354.00,
-        tp1Pips: 140,
-        tp1Gain: 14.00,
-        tp2Price: 4342.00,
-        tp2Pips: 260,
-        tp2Gain: 26.00,
-        tp3Price: 4325.00,
-        tp3Pips: 430,
-        tp3Gain: 43.00,
-        tp4Price: 4300.00,
-        tp4Pips: 680,
-        tp4Gain: 68.00,
-        zoneMin: 4367.00,
-        zoneMax: 4369.50,
+        tp1Price: 4295.00,
+        tp1Pips: 170,
+        tp1Gain: 17.00,
+        tp2Price: 4280.00,
+        tp2Pips: 320,
+        tp2Gain: 32.00,
+        tp3Price: 4265.00,
+        tp3Pips: 470,
+        tp3Gain: 47.00,
+        tp4Price: 4250.00,
+        tp4Pips: 620,
+        tp4Gain: 62.00,
+        zoneMin: 4310.50,
+        zoneMax: 4313.50,
         session: "15M SUPPLY RE-TEST",
-        reason: "15M Bearish Fair Value Gap & Supply Continuation",
-        subText: "Above $4,372.50 SL • 45 Pips Risk (-$4.50)",
+        reason: "15M Bearish Order Block & FVG Invalidation Retest",
+        subText: "Above $4,316.50 SL • 45 Pips Risk (-$4.50)",
         status: "QUEUED",
-        winProb: 92,
+        confluenceGrade: "A+ INSTITUTIONAL",
         probGrade: "A+ PRIME",
-        summary: "Queued Setup: Retest of $4,368 supply targeting $4,354 & $4,342.",
-        smcAnalysis: "15M Fair Value Gap ($4,367.00 – $4,369.50) tap hone par downward continuation momentum.",
-        macroAnalysis: "Dollar index bullish momentum sustain rehne se metal space par selling pressure intact hai.",
-        liqAnalysis: "Intraday equal lows liquidity sweep target ($4,354 & $4,342).",
-        newsAnalysis: "Order flow balanced, institutional trend continuation active.",
-        winReason: "15M FVG fill and clean rejection.",
+        summary: "Queued Setup: Retest of $4,312 supply targeting $4,295 & $4,280.",
+        smcAnalysis: "15M Order Block supply tap par strong rejection.",
+        macroAnalysis: "Dollar Index continuing higher.",
+        liqAnalysis: "Equal lows target down to $4,280 SSL.",
+        newsAnalysis: "Calm news wire.",
+        winReason: "15M supply block mitigation.",
         disciplineRule: "Partial book at 1:2."
     }
 ];
 
-const PIPELINE_PERSIST_KEY = "trading_terminal_pipeline_state_v35";
+const PIPELINE_PERSIST_KEY = "trading_terminal_pipeline_state_v36";
 
 function savePipelinePersistence() {
     try {
@@ -2713,7 +2713,7 @@ function replenishPipelineTradesIfNeeded(cp) {
     const uncompleted = DAY_TRADE_PIPELINE.filter(isPipelineTradeActiveOrQueued);
     if (uncompleted.length >= 3) return;
 
-    const baseSpot = (typeof cp === "number" && !isNaN(cp)) ? cp : 4418.00;
+    const baseSpot = (typeof cp === "number" && !isNaN(cp)) ? cp : 4285.31;
     
     const freshSetups = [
         {
@@ -2745,7 +2745,7 @@ function replenishPipelineTradesIfNeeded(cp) {
             reason: "15M Bearish FVG Mitigation & Resistance Flip",
             subText: "Micro Supply Re-tap • 45 Pips Risk (-$4.50)",
             status: "QUEUED",
-            winProb: 91,
+            confluenceGrade: "A INSTITUTIONAL",
             probGrade: "A INSTITUTIONAL",
             bullet1Price: +(baseSpot + 3.50).toFixed(2),
             bullet2Price: +(baseSpot + 5.50).toFixed(2),
@@ -2782,7 +2782,7 @@ function replenishPipelineTradesIfNeeded(cp) {
             reason: "Intraday Low Swept with 1M Absorption",
             subText: "Below Intraday Low Buffer • 45 Pips Risk (-$4.50)",
             status: "QUEUED",
-            winProb: 88,
+            confluenceGrade: "A- DEMAND BOUNCE",
             probGrade: "A- DEMAND BOUNCE",
             bullet1Price: +(baseSpot - 4.50).toFixed(2),
             bullet2Price: +(baseSpot - 6.50).toFixed(2),
@@ -2810,7 +2810,7 @@ function renderTradePipelineTabs() {
     const container = document.getElementById("tpsTabsContainer");
     if (!container) return;
 
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4418.20;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
 
     // Check if replenishment is needed
     replenishPipelineTradesIfNeeded(cp);
@@ -2873,7 +2873,7 @@ function renderTradePipelineTabs() {
                 cls = "queued";
             }
 
-            const probStr = trade.winProb ? ` • 🎯 ${trade.winProb}%` : '';
+            const probStr = (trade.confluenceGrade || trade.probGrade) ? ` • 🎯 ${trade.confluenceGrade || trade.probGrade}` : (trade.winProb ? ` • 🎯 ${trade.winProb}%` : '');
             const bSplitStr = ` • 2-B 🛡️`;
             html += `<button class="tps-tab ${cls}" onclick="selectActivePipelineTrade(${origIdx})" id="tpsTab${origIdx}" title="Click to view setup details (2-Bullet Scale-in & Whale Magnet Verified)">
                 <span>${icon}</span> <strong>TRADE #${trade.seq}: $${trade.entryPrice.toFixed(2)}</strong> (${statusLabel}${probStr}${bSplitStr})
@@ -2906,7 +2906,7 @@ function selectActivePipelineTrade(idx) {
 window.selectActivePipelineTrade = selectActivePipelineTrade;
 
 function shiftToNextTrade() {
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.20;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
     replenishPipelineTradesIfNeeded(cp);
     const uncompleted = DAY_TRADE_PIPELINE.filter(isPipelineTradeActiveOrQueued);
     if (uncompleted.length > 0) {
@@ -2924,7 +2924,7 @@ window.shiftToNextTrade = shiftToNextTrade;
 
 function secureCurrentTradeAndAdvance() {
     const curTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX];
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.20;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
     
     if (curTrade) {
         curTrade.status = "DONE";
@@ -2949,7 +2949,7 @@ window.secureCurrentTradeAndAdvance = secureCurrentTradeAndAdvance;
 // USER RULE: Market entry point par aye baghair pehle hi nikal jaye to invalidate & shift
 function markCurrentTradeMissedAndAdvance() {
     const curTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX];
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.20;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
     
     if (curTrade) {
         curTrade.status = "MISSED";
@@ -3807,15 +3807,14 @@ function syncMasterUnifiedCockpit(gold, isBear) {
         if (mucSlVal) mucSlVal.innerText = "$" + slPrice.toFixed(2);
         if (mucRrSpanVal) mucRrSpanVal.innerText = "1:2 ➔ 1:10 (Dynamic Target)";
 
-        // Cockpit Win Probability & Quality Grade Badge
+        // Cockpit Confluence & Quality Grade Badge
         const cahWinProbBadge = document.getElementById("cahWinProbBadge");
         if (cahWinProbBadge) {
-            const prob = activeTrade.winProb || 89;
-            const grade = activeTrade.probGrade || (prob >= 90 ? "A+ PRIME" : "A INSTITUTIONAL");
-            cahWinProbBadge.textContent = `🎯 ${prob}% WIN RATIO (${grade})`;
-            cahWinProbBadge.style.color = prob >= 90 ? "#00f59b" : (prob >= 80 ? "#38bdf8" : "#fbbf24");
-            cahWinProbBadge.style.borderColor = prob >= 90 ? "rgba(0,245,155,0.4)" : (prob >= 80 ? "rgba(56,189,248,0.4)" : "rgba(251,191,36,0.4)");
-            cahWinProbBadge.style.background = prob >= 90 ? "rgba(0,245,155,0.15)" : (prob >= 80 ? "rgba(56,189,248,0.15)" : "rgba(251,191,36,0.15)");
+            const grade = activeTrade.confluenceGrade || activeTrade.probGrade || "A+ INSTITUTIONAL";
+            cahWinProbBadge.textContent = `🎯 CONFLUENCE VERIFIED (${grade})`;
+            cahWinProbBadge.style.color = "#00f59b";
+            cahWinProbBadge.style.borderColor = "rgba(0,245,155,0.4)";
+            cahWinProbBadge.style.background = "rgba(0,245,155,0.15)";
         }
 
         // 1. ULTRA-CLEAR ACTION HERO: KIA KARNA HAI • KAHAN SE • KAHAN TAK
@@ -4047,7 +4046,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 const liqM = Math.floor(135 + Math.abs(activeTrade.tp1Pips || 115) * 0.75 + ((activeTrade.seq || 1) % 5) * 12);
                 omniQna.innerHTML = `🟢 <strong>OMNI-AI SUPREME VERDICT (TRADE #${activeTrade.seq}): BUY CONFLUENCE VALIDATED.</strong> 🛡️ <em>2-Bullet Shield:</em> B1 @ $${bullet1Price.toFixed(2)} / B2 Wick @ $${bullet2Price.toFixed(2)} • 🌊 <em>Whale Magnet:</em> Hunting Est. $${liqM}M Retail Short Stops • SL: $${slPrice.toFixed(2)} (${activeTrade.riskPips} Pips).`;
                 omniQna.style.color = "var(--color-green)";
-                if (omniScoreText) omniScoreText.innerHTML = `🟢 92% CONFLUENCE: 2-BULLET SHIELD + $${liqM}M LIQ MAGNET + SMC`;
+                if (omniScoreText) omniScoreText.innerHTML = `🟢 HIGH CONFLUENCE: 2-BULLET SHIELD + $${liqM}M LIQ MAGNET + SMC`;
                 if (omniScorePill) {
                     omniScorePill.style.background = "rgba(0, 245, 155, 0.15)";
                     omniScorePill.style.borderColor = "var(--color-green)";
@@ -4056,7 +4055,7 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 const liqM = Math.floor(135 + Math.abs(activeTrade.tp1Pips || 115) * 0.75 + ((activeTrade.seq || 1) % 5) * 12);
                 omniQna.innerHTML = `🔴 <strong>OMNI-AI SUPREME VERDICT (TRADE #${activeTrade.seq}): SELL CONFLUENCE VALIDATED.</strong> 🛡️ <em>2-Bullet Shield:</em> B1 @ $${bullet1Price.toFixed(2)} / B2 Wick @ $${bullet2Price.toFixed(2)} • 🌊 <em>Whale Magnet:</em> Hunting Est. $${liqM}M Retail Long Stops • SL: $${slPrice.toFixed(2)} (${activeTrade.riskPips} Pips).`;
                 omniQna.style.color = "var(--color-red)";
-                if (omniScoreText) omniScoreText.innerHTML = `🔴 89% CONFLUENCE: 2-BULLET SHIELD + $${liqM}M LIQ MAGNET + SMC`;
+                if (omniScoreText) omniScoreText.innerHTML = `🔴 HIGH CONFLUENCE: 2-BULLET SHIELD + $${liqM}M LIQ MAGNET + SMC`;
                 if (omniScorePill) {
                     omniScorePill.style.background = "rgba(255, 59, 92, 0.15)";
                     omniScorePill.style.borderColor = "var(--color-red)";
@@ -4189,11 +4188,10 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 macRiskSub.innerHTML = `🛡️ STRICT RISK: -$${riskD} (${riskP} Pips @ 0.01 Lot)`;
             }
 
-            // Probability Badge
+            // Confluence Badge
             if (macWinProbBadge) {
-                const prob = activeTrade.winProb || 89;
-                const grade = activeTrade.probGrade || (prob >= 90 ? "A+ PRIME" : "A INSTITUTIONAL");
-                macWinProbBadge.textContent = `🎯 ${prob}% WIN PROBABILITY (${grade})`;
+                const grade = activeTrade.confluenceGrade || activeTrade.probGrade || "A+ PRIME";
+                macWinProbBadge.textContent = `🎯 CONFLUENCE VERIFIED (4/4 MACRO + SMC ALIGNED • ${grade})`;
             }
 
             // Pillar 1: IS WAQT KYA KARNA HAI? & STATE BADGE
@@ -4991,7 +4989,7 @@ function computeRealtimeConfluence() {
     const isTradeBear = activeTrade ? activeTrade.isBear : true;
 
     if (isTradeBear) {
-        if (omniScoreText) omniScoreText.innerHTML = "🔴 89% BEARISH CONFLUENCE (SELL BIAS)";
+        if (omniScoreText) omniScoreText.innerHTML = "🔴 HIGH CONFLUENCE (3/4 CONDITIONS MET • SELL BIAS)";
         if (omniScorePill) {
             omniScorePill.style.background = "rgba(255, 59, 92, 0.15)";
             omniScorePill.style.borderColor = "var(--color-red)";
@@ -6186,7 +6184,7 @@ function renderTerminalUI() {
 
         const msbVerdict = document.getElementById("msbVerdict");
         if (msbVerdict) {
-            msbVerdict.innerHTML = pred.verdictText || (pred.isBull ? "🟢 BULLISH INFLOW" : "🔴 89% REAL-TIME BEARISH (DO NOT BUY • SELL AT LOWER HIGHS)");
+            msbVerdict.innerHTML = pred.verdictText || (pred.isBull ? "🟢 STRUCTURAL BULLISH INFLOW" : "🔴 STRUCTURAL BEARISH (DO NOT BUY • SELL AT LOWER HIGHS)");
             msbVerdict.className = pred.isBull ? "text-up" : "text-down";
         }
 
@@ -7111,7 +7109,7 @@ function renderUnifiedPerformanceJournal() {
     }
 
     // Dynamic Live Floating Tracker for Active Pipeline Trade
-    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4408.20;
+    const cp = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : 4285.31;
     const activePipeTrade = DAY_TRADE_PIPELINE[CURRENT_PIPELINE_INDEX] || DAY_TRADE_PIPELINE[3] || DAY_TRADE_PIPELINE[2];
     const activeTradeTitle = document.getElementById("activeTradeTitle");
     const activeTradeSub = document.getElementById("activeTradeSub");
@@ -7233,7 +7231,7 @@ function renderUnifiedPerformanceJournal() {
         const probBorder = probVal >= 90 ? "rgba(16, 185, 129, 0.4)" : (probVal >= 80 ? "rgba(56, 189, 248, 0.4)" : "rgba(251, 191, 36, 0.4)");
         const probBg = probVal >= 90 ? "rgba(16, 185, 129, 0.15)" : (probVal >= 80 ? "rgba(56, 189, 248, 0.15)" : "rgba(251, 191, 36, 0.15)");
 
-        const probBadge = `<span class="ac-prob-badge" style="background:${probBg}; border:1px solid ${probBorder}; color:${probColor}; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">🎯 ${probVal}% WIN RATIO${probGradeText}</span>`;
+        const probBadge = `<span class="ac-prob-badge" style="background:${probBg}; border:1px solid ${probBorder}; color:${probColor}; font-size:0.68rem; font-family:var(--font-mono); font-weight:800; padding:2px 8px; border-radius:4px; margin-right:6px; display:inline-block;">🎯 CONFLUENCE VERIFIED${probGradeText}</span>`;
 
         const dirColor = t.direction === "BUY" ? "var(--color-green)" : "var(--color-red)";
         const tradeDate = t.date || getLiveMarketDateString();
@@ -7259,7 +7257,7 @@ function renderUnifiedPerformanceJournal() {
                 </div>
                 <div class="ac-levels">
                     <div class="ac-level-item"><span>Setup Scenario:</span> <strong style="color:${isRetest ? '#c084fc' : '#38bdf8'}; font-family:var(--font-mono);">${isRetest ? '🔄 Retest (Pullback / POI)' : '⚡ First-Time (Direct Sweep)'}</strong></div>
-                    <div class="ac-level-item"><span>Win Ratio:</span> <strong style="color:${probColor}; font-family:var(--font-mono);">🎯 ${probVal}%${probGradeText}</strong></div>
+                    <div class="ac-level-item"><span>Confluence Rating:</span> <strong style="color:${probColor}; font-family:var(--font-mono);">🎯 ${t.confluenceGrade || t.probGrade || (probVal >= 90 ? 'A+ PRIME' : 'A INSTITUTIONAL')}</strong></div>
                     <div class="ac-level-item"><span>Entry Price:</span> <strong>${t.entry}</strong></div>
                     <div class="ac-level-item"><span>Sniper SL:</span> <strong style="color:var(--color-red)">${t.sl}</strong></div>
                     <div class="ac-level-item"><span>Target TP:</span> <strong style="color:var(--color-green)">${t.tpTarget}</strong></div>

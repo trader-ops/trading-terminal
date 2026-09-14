@@ -33,9 +33,9 @@ const MARKET_CACHE = {
     status: "LIVE_TRADINGVIEW_STREAM_SYNCED",
     source: "TradingView Official Stream (OANDA / PEPPERSTONE / TVC)",
     assets: {
-        "XAUUSD": { price: 4357.31, prevClose: 4406.06, change: -48.75, changePct: "-1.11%", high: 4435.25, low: 4357.10 },
-        "DXY": { price: 98.86, prevClose: 98.90, change: -0.04, changePct: "-0.04%", high: 99.20, low: 98.86 },
-        "US10Y": { price: 4.784, prevClose: 4.772, change: 0.012, changePct: "+0.25%", high: 4.810, low: 4.748 },
+        "XAUUSD": { price: 4285.31, prevClose: 4338.79, change: -64.11, changePct: "-1.47%", high: 4355.40, low: 4280.63 },
+        "DXY": { price: 99.53, prevClose: 99.10, change: 0.44, changePct: "+0.44%", high: 99.60, low: 99.07 },
+        "US10Y": { price: 4.959, prevClose: 4.949, change: 0.010, changePct: "+0.20%", high: 4.983, low: 4.949 },
         "EURUSD": { price: 1.1623, prevClose: 1.1613, change: 0.0010, changePct: "+0.01%", high: 1.1630, low: 1.1604 },
         "GBPUSD": { price: 1.3506, prevClose: 1.3511, change: -0.0005, changePct: "-0.04%", high: 1.3522, low: 1.3506 }
     }
