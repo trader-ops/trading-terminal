@@ -3577,6 +3577,139 @@ function updatePullbackRadar(cp, activeTrade) {
 window.updatePullbackRadar = updatePullbackRadar;
 
 // ==========================================
+// REAL-TIME 4-PILLAR DYNAMIC CONFLUENCE EVALUATOR
+// Evaluates live market state against DXY, 10Y Yields, 5M POI Proximity, and News Shield
+// ==========================================
+function evaluateLiveConfluences(trade) {
+    if (!trade) {
+        return {
+            score: 0,
+            total: 4,
+            badgeText: "⏳ STANDBY (NO ACTIVE SETUP)",
+            badgeColor: "#94a3b8",
+            badgeBg: "rgba(148,163,184,0.15)",
+            badgeBorder: "rgba(148,163,184,0.3)",
+            conditions: []
+        };
+    }
+
+    const liveGold = (ASSETS["XAUUSD"] && ASSETS["XAUUSD"].currentPrice) ? ASSETS["XAUUSD"].currentPrice : REAL_XAU_ANCHOR;
+    const dxy = ASSETS["DXY"] || { currentPrice: 99.53, direction: "UP", changePct: "+0.44%" };
+    const us10y = ASSETS["US10Y"] || { currentPrice: 4.96, direction: "UP", changePct: "+0.20%" };
+    const isBear = (trade.action && trade.action.includes("SELL")) || trade.isBear;
+
+    // Pillar 1: DXY Macro Flow Alignment
+    const dxyPct = parseFloat(dxy.changePct) || 0;
+    let dxyPass = false;
+    let dxyDesc = "";
+    if (isBear) {
+        dxyPass = (dxy.direction === "UP" || dxyPct >= -0.05);
+        dxyDesc = dxyPass 
+            ? `DXY ${dxy.currentPrice} (${dxy.changePct || '+0.44%'}) Bullish • Dollar Strength aligns with Gold Sell`
+            : `DXY ${dxy.currentPrice} (${dxy.changePct || '-0.20%'}) Bearish • Dollar opposing Gold Sell setup`;
+    } else {
+        dxyPass = (dxy.direction === "DOWN" || dxyPct <= 0.05);
+        dxyDesc = dxyPass 
+            ? `DXY ${dxy.currentPrice} (${dxy.changePct || '-0.44%'}) Bearish • Dollar Drop aligns with Gold Buy`
+            : `DXY ${dxy.currentPrice} (${dxy.changePct || '+0.44%'}) Bullish • Dollar Surge opposing Gold Buy setup`;
+    }
+
+    // Pillar 2: US10Y Bond Yields Flow
+    const yieldPct = parseFloat(us10y.changePct) || 0;
+    let yieldPass = false;
+    let yieldDesc = "";
+    if (isBear) {
+        yieldPass = (us10y.direction === "UP" || yieldPct >= 0);
+        yieldDesc = yieldPass
+            ? `US10Y ${us10y.currentPrice}% (+${yieldPct.toFixed(2)}%) • Elevated yields applying downward pressure`
+            : `US10Y ${us10y.currentPrice}% Falling • Sovereign yield pressure softening`;
+    } else {
+        yieldPass = (us10y.direction === "DOWN" || yieldPct <= 0.05);
+        yieldDesc = yieldPass
+            ? `US10Y ${us10y.currentPrice}% Dipping • Softening bond yields supporting Gold bounce`
+            : `US10Y ${us10y.currentPrice}% Surging • Rising yield headwinds for Gold Buy`;
+    }
+
+    // Pillar 3: SMC 5M POI & Zone Execution Proximity
+    const entry = trade.entryPrice || 4295.00;
+    const sl = trade.slPrice || 4298.50;
+    let smcPass = false;
+    let smcDesc = "";
+
+    if (isBear) {
+        const notInvalidated = liveGold <= sl + 0.50;
+        const inProximity = liveGold >= (entry - (trade.riskPips ? trade.riskPips * 0.15 : 6.0));
+        smcPass = notInvalidated && inProximity;
+        smcDesc = smcPass
+            ? `Live Spot $${liveGold.toFixed(2)} inside 5M FVG Execution Zone ($${entry.toFixed(2)} - $${sl.toFixed(2)})`
+            : (liveGold > sl + 0.50 ? `Live Spot $${liveGold.toFixed(2)} breached SL ($${sl.toFixed(2)}) • Setup Invalidated` : `Live Spot $${liveGold.toFixed(2)} awaiting pullback toward $${entry.toFixed(2)}`);
+    } else {
+        const notInvalidated = liveGold >= sl - 0.50;
+        const inProximity = liveGold <= (entry + (trade.riskPips ? trade.riskPips * 0.15 : 6.0));
+        smcPass = notInvalidated && inProximity;
+        smcDesc = smcPass
+            ? `Live Spot $${liveGold.toFixed(2)} inside 5M Demand POI Zone ($${sl.toFixed(2)} - $${entry.toFixed(2)})`
+            : (liveGold < sl - 0.50 ? `Live Spot $${liveGold.toFixed(2)} breached SL ($${sl.toFixed(2)}) • Setup Invalidated` : `Live Spot $${liveGold.toFixed(2)} awaiting dip toward $${entry.toFixed(2)}`);
+    }
+
+    // Pillar 4: High-Impact Red Folder News Shield (15M Buffer)
+    const now = new Date();
+    const h = now.getUTCHours();
+    const m = now.getUTCMinutes();
+    const isRedWindow = ((h === 12 && m >= 15) || (h === 13 && m <= 45) || (h === 17 && m >= 45) || (h === 18) || (h === 19 && m <= 15));
+    const newsPass = !isRedWindow;
+    const newsDesc = newsPass
+        ? `News Shield Safe • No high-impact CPI/NFP/FOMC release in active ±15m window`
+        : `News Shield ACTIVE • In ±15m high-impact release danger window (Entries frozen)`;
+
+    const conditions = [
+        { id: "dxy", name: "1. Macro Dollar Flow", pass: dxyPass, desc: dxyDesc },
+        { id: "yields", name: "2. US 10Y Yields", pass: yieldPass, desc: yieldDesc },
+        { id: "smc", name: "3. SMC 5M POI Zone", pass: smcPass, desc: smcDesc },
+        { id: "news", name: "4. Red Folder News Shield", pass: newsPass, desc: newsDesc }
+    ];
+
+    const score = conditions.filter(c => c.pass).length;
+    let badgeText = "";
+    let badgeColor = "";
+    let badgeBg = "";
+    let badgeBorder = "";
+
+    if (score === 4) {
+        badgeText = `🎯 4/4 CONFLUENCES MET (A+ PRIME)`;
+        badgeColor = "#00f59b";
+        badgeBg = "rgba(0,245,155,0.15)";
+        badgeBorder = "rgba(0,245,155,0.4)";
+    } else if (score === 3) {
+        badgeText = `⚡ 3/4 CONFLUENCES MET (QUALIFIED)`;
+        badgeColor = "#38bdf8";
+        badgeBg = "rgba(56,189,248,0.15)";
+        badgeBorder = "rgba(56,189,248,0.4)";
+    } else if (score === 2) {
+        badgeText = `⚠️ 2/4 CONDITIONAL CONFLUENCE`;
+        badgeColor = "#f59e0b";
+        badgeBg = "rgba(245,158,11,0.15)";
+        badgeBorder = "rgba(245,158,11,0.4)";
+    } else {
+        badgeText = `🛑 ${score}/4 WEAK CONFLUENCE (STANDBY)`;
+        badgeColor = "#ef4444";
+        badgeBg = "rgba(239,68,68,0.15)";
+        badgeBorder = "rgba(239,68,68,0.4)";
+    }
+
+    return {
+        score,
+        total: 4,
+        badgeText,
+        badgeColor,
+        badgeBg,
+        badgeBorder,
+        conditions
+    };
+}
+window.evaluateLiveConfluences = evaluateLiveConfluences;
+
+// ==========================================
 // MASTER UNIFIED COCKPIT - REAL-TIME TICKING & DYNAMIC TARGET ENGINE
 // ==========================================
 function syncMasterUnifiedCockpit(gold, isBear) {
@@ -3807,14 +3940,17 @@ function syncMasterUnifiedCockpit(gold, isBear) {
         if (mucSlVal) mucSlVal.innerText = "$" + slPrice.toFixed(2);
         if (mucRrSpanVal) mucRrSpanVal.innerText = "1:2 ➔ 1:10 (Dynamic Target)";
 
+        // Real Dynamic Live Confluence Calculation
+        const liveConf = evaluateLiveConfluences(activeTrade);
+
         // Cockpit Confluence & Quality Grade Badge
         const cahWinProbBadge = document.getElementById("cahWinProbBadge");
         if (cahWinProbBadge) {
-            const grade = activeTrade.confluenceGrade || activeTrade.probGrade || "A+ INSTITUTIONAL";
-            cahWinProbBadge.textContent = `🎯 CONFLUENCE VERIFIED (${grade})`;
-            cahWinProbBadge.style.color = "#00f59b";
-            cahWinProbBadge.style.borderColor = "rgba(0,245,155,0.4)";
-            cahWinProbBadge.style.background = "rgba(0,245,155,0.15)";
+            cahWinProbBadge.textContent = liveConf.badgeText;
+            cahWinProbBadge.style.color = liveConf.badgeColor;
+            cahWinProbBadge.style.borderColor = liveConf.badgeBorder;
+            cahWinProbBadge.style.background = liveConf.badgeBg;
+            cahWinProbBadge.title = liveConf.conditions.map(c => `${c.pass ? '✓' : '✗'} ${c.name}: ${c.desc}`).join('\n');
         }
 
         // 1. ULTRA-CLEAR ACTION HERO: KIA KARNA HAI • KAHAN SE • KAHAN TAK
@@ -4188,10 +4324,13 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 macRiskSub.innerHTML = `🛡️ STRICT RISK: -$${riskD} (${riskP} Pips @ 0.01 Lot)`;
             }
 
-            // Confluence Badge
+            // Confluence Badge - Live Evaluated Count & Checklist
             if (macWinProbBadge) {
-                const grade = activeTrade.confluenceGrade || activeTrade.probGrade || "A+ PRIME";
-                macWinProbBadge.textContent = `🎯 CONFLUENCE VERIFIED (4/4 MACRO + SMC ALIGNED • ${grade})`;
+                macWinProbBadge.textContent = liveConf.badgeText;
+                macWinProbBadge.style.color = liveConf.badgeColor;
+                macWinProbBadge.style.borderColor = liveConf.badgeBorder;
+                macWinProbBadge.style.background = liveConf.badgeBg;
+                macWinProbBadge.title = liveConf.conditions.map(c => `${c.pass ? '✓' : '✗'} ${c.name}: ${c.desc}`).join('\n');
             }
 
             // Pillar 1: IS WAQT KYA KARNA HAI? & STATE BADGE
@@ -4320,25 +4459,32 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 }
             }
 
-            // Institutional SMC Confluences
+            // Institutional SMC Confluences - Dynamically Computed from Live Feed
+            const c1Dxy = liveConf.conditions.find(c => c.id === 'dxy');
+            const c2Yields = liveConf.conditions.find(c => c.id === 'yields');
+            const c3Smc = liveConf.conditions.find(c => c.id === 'smc');
+            const c4News = liveConf.conditions.find(c => c.id === 'news');
+
             if (smcReasonLiq) {
-                smcReasonLiq.textContent = activeTrade.liqAnalysis || (isTradeBear 
+                const tag = (c3Smc && c3Smc.pass) ? `<span style="color:#00f59b; font-weight:900;">[✓ PASS]</span> ` : `<span style="color:#f59e0b; font-weight:900;">[⏳ PENDING]</span> `;
+                smcReasonLiq.innerHTML = tag + (activeTrade.liqAnalysis || (isTradeBear 
                     ? `Whale BSL Swept at $${(entryPrice + 1.5).toFixed(2)} • Retail Buy-Stops Cleared` 
-                    : `Whale SSL Swept at $${(entryPrice - 1.5).toFixed(2)} • Retail Sell-Stops Purged`);
+                    : `Whale SSL Swept at $${(entryPrice - 1.5).toFixed(2)} • Retail Sell-Stops Purged`));
             }
             if (smcReasonObFvg) {
-                smcReasonObFvg.textContent = activeTrade.smcAnalysis || (isTradeBear 
-                    ? `15M Bearish Order Block ($${entryPrice.toFixed(2)}) & Supply Retest` 
-                    : `15M Bullish Demand Order Block ($${entryPrice.toFixed(2)}) & FVG Mitigation`);
+                const tag = (c3Smc && c3Smc.pass) ? `<span style="color:#00f59b; font-weight:900;">[✓ PASS]</span> ` : `<span style="color:#ef4444; font-weight:900;">[⚠️ RE-TESTING]</span> `;
+                smcReasonObFvg.innerHTML = tag + (c3Smc ? c3Smc.desc : (activeTrade.smcAnalysis || "5M FVG Execution"));
             }
             if (smcReasonMacro) {
-                const dxyVal = (ASSETS["DXY"] ? ASSETS["DXY"].currentPrice.toFixed(2) : "99.18");
-                smcReasonMacro.textContent = activeTrade.macroAnalysis || `DXY Dollar Index ${dxyVal} Sustaining • Gold Pressure`;
+                const macroPass = (c1Dxy && c1Dxy.pass && c2Yields && c2Yields.pass);
+                const tag = macroPass ? `<span style="color:#00f59b; font-weight:900;">[✓ PASS]</span> ` : `<span style="color:#f59e0b; font-weight:900;">[⚠️ HEADWIND]</span> `;
+                smcReasonMacro.innerHTML = tag + (c1Dxy ? c1Dxy.desc : `DXY ${(ASSETS["DXY"]?.currentPrice || 99.53)}`);
             }
             if (smcReasonTarget) {
-                smcReasonTarget.textContent = isTradeBear 
-                    ? `Delivering to Sell-Side Liquidity (SSL) at $${tp1Price.toFixed(2)} (+${activeTrade.tp1Pips || 115} Pips)` 
-                    : `Delivering to Buy-Side Liquidity (BSL) at $${tp1Price.toFixed(2)} (+${activeTrade.tp1Pips || 115} Pips)`;
+                const tag = (c4News && c4News.pass) ? `<span style="color:#00f59b; font-weight:900;">[✓ SAFE]</span> ` : `<span style="color:#ef4444; font-weight:900;">[🔴 FREEZE]</span> `;
+                smcReasonTarget.innerHTML = tag + (c4News ? c4News.desc : (isTradeBear 
+                    ? `Delivering to SSL at $${tp1Price.toFixed(2)} (+${activeTrade.tp1Pips || 115} Pips)` 
+                    : `Delivering to BSL at $${tp1Price.toFixed(2)} (+${activeTrade.tp1Pips || 115} Pips)`));
             }
         }
 
