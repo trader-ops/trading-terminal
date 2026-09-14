@@ -280,28 +280,179 @@ function updateOmniNewsPillar(isBear = true) {
     updateRedFolderShield();
 }
 
+// =========================================================================
+// SECTION 1B: STRUCTURED HIGH-IMPACT USD ECONOMIC EVENT CALENDAR & SHIELD
+// =========================================================================
+const HIGH_IMPACT_USD_EVENTS = [
+    // --- AUGUST 2026 BENCHMARKS ---
+    { name: "US Non-Farm Payrolls & Unemployment Rate", date: "2026-08-07", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Labor data shock" },
+    { name: "US Consumer Price Index (CPI YoY)", date: "2026-08-12", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Headline inflation dropped to 2.9%" },
+    { name: "US Core PPI (Producer Price Index)", date: "2026-08-13", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Wholesale inflation print" },
+    { name: "US Initial Jobless Claims", date: "2026-08-20", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Weekly employment claims" },
+    { name: "Fed Chair Powell Jackson Hole Address", date: "2026-08-21", timeUtc: "14:00", impact: "HIGH", currency: "USD", note: "Powell dovish pivot: time has come for policy to adjust" },
+    { name: "US Prelim GDP q/q & Jobless Claims", date: "2026-08-27", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Annualized growth report" },
+    { name: "US Core PCE Price Index MoM", date: "2026-08-28", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Fed preferred inflation gauge" },
+
+    // --- SEPTEMBER 2026 CURRENT CYCLE ---
+    { name: "US Non-Farm Payrolls (NFP) & Unemployment Rate", date: "2026-09-04", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Actual 142K vs 160K Forecast; swept highs then historic $100 gold flush" },
+    { name: "US CPI (Consumer Price Index / Inflation)", date: "2026-09-09", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Headline CPI cooled to 2.5% YoY; sharp two-sided liquidity sweep" },
+    { name: "US Core PPI & Initial Jobless Claims", date: "2026-09-10", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Core PPI +0.3%, Jobless Claims 230K" },
+    { name: "US Core Retail Sales MoM", date: "2026-09-15", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Key pre-FOMC consumer health gauge" },
+    { name: "FOMC Rate Decision & Fed Economic Projections", date: "2026-09-16", timeUtc: "18:00", impact: "HIGH", currency: "USD", note: "Cycle-defining interest rate decision & dot plot" },
+    { name: "FOMC Press Conference (Fed Chair Powell)", date: "2026-09-16", timeUtc: "18:30", impact: "HIGH", currency: "USD", note: "Fed Chair presser; extreme market volatility" },
+    { name: "US Initial Jobless Claims & Philly Fed Index", date: "2026-09-17", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Post-FOMC regional survey and weekly claims" },
+    { name: "BOJ Interest Rate Decision", date: "2026-09-18", timeUtc: "03:00", impact: "HIGH", currency: "USD", note: "Bank of Japan policy verdict; Yen carry trade impact" },
+    { name: "US Final GDP q/q & Initial Jobless Claims", date: "2026-09-24", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Final annualized GDP reading" },
+    { name: "US Core PCE Price Index MoM", date: "2026-09-25", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Personal consumption expenditure deflator" },
+
+    // --- OCTOBER 2026 FORWARD CALENDAR ---
+    { name: "US Non-Farm Payrolls & Unemployment Rate", date: "2026-10-02", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "Q4 opening labor market test" },
+    { name: "US CPI (Inflation Report)", date: "2026-10-14", timeUtc: "12:30", impact: "HIGH", currency: "USD", note: "October inflation print" },
+    { name: "FOMC Rate Decision & Powell Press Conference", date: "2026-10-28", timeUtc: "18:00", impact: "HIGH", currency: "USD", note: "Second autumn policy verdict" }
+];
+window.HIGH_IMPACT_USD_EVENTS = HIGH_IMPACT_USD_EVENTS;
+
+function getRedFolderEventStatus(targetDate = new Date()) {
+    const target = (targetDate instanceof Date) ? targetDate : new Date(targetDate);
+    const targetMs = target.getTime();
+    
+    // Format UTC Date: YYYY-MM-DD
+    const y = target.getUTCFullYear();
+    const m = String(target.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(target.getUTCDate()).padStart(2, "0");
+    const todayIso = `${y}-${m}-${d}`;
+    
+    // High-impact events for USD
+    const highEvents = HIGH_IMPACT_USD_EVENTS.filter(e => e.impact === "HIGH" && e.currency === "USD");
+    const todayEvents = highEvents.filter(e => e.date === todayIso);
+    
+    // Dynamic Red Folder Shield: Active strictly within ±30 minutes of real scheduled event today
+    let activeEvent = null;
+    for (const ev of todayEvents) {
+        const [hh, mm] = ev.timeUtc.split(":").map(Number);
+        const evDate = new Date(Date.UTC(y, target.getUTCMonth(), target.getUTCDate(), hh, mm, 0));
+        const diffMinutes = (targetMs - evDate.getTime()) / (60 * 1000);
+        if (Math.abs(diffMinutes) <= 30) {
+            activeEvent = {
+                ...ev,
+                diffMinutes: Math.round(diffMinutes),
+                eventTime: evDate
+            };
+            break;
+        }
+    }
+    
+    const isRed = (activeEvent !== null);
+    let statusText = "";
+    if (isRed) {
+        statusText = `🔴 RED FOLDER FREEZE ACTIVE • ${activeEvent.name} (${activeEvent.timeUtc} UTC)`;
+    } else if (todayEvents.length === 0) {
+        statusText = "🟢 NEWS CLEAR: NO RED FOLDER EVENTS TODAY (SAFE TO TRADE)";
+    } else {
+        const nextToday = todayEvents.map(ev => {
+            const [hh, mm] = ev.timeUtc.split(":").map(Number);
+            const evDate = new Date(Date.UTC(y, target.getUTCMonth(), target.getUTCDate(), hh, mm, 0));
+            return { ...ev, evDate, msRemaining: evDate.getTime() - targetMs };
+        }).filter(ev => ev.msRemaining > 0).sort((a, b) => a.msRemaining - b.msRemaining)[0];
+
+        if (nextToday) {
+            const minsLeft = Math.round(nextToday.msRemaining / 60000);
+            statusText = `🟡 NEWS CAUTION: ${nextToday.name} in ${minsLeft}m (${nextToday.timeUtc} UTC)`;
+        } else {
+            statusText = "🟢 NEWS CLEAR: TODAY'S RED EVENTS CONCLUDED (SAFE TO TRADE)";
+        }
+    }
+    
+    return {
+        isRed,
+        activeEvent,
+        todayEvents,
+        statusText
+    };
+}
+window.getRedFolderEventStatus = getRedFolderEventStatus;
+
+function isRedFolderNewsWindow(targetDate = new Date()) {
+    return getRedFolderEventStatus(targetDate).isRed;
+}
+window.isRedFolderNewsWindow = isRedFolderNewsWindow;
+
 function updateRedFolderShield() {
     const pill = document.getElementById("redFolderStatusPill");
-    if (!pill) return;
     const now = new Date();
-    const h = now.getUTCHours();
-    const m = now.getUTCMinutes();
+    const status = getRedFolderEventStatus(now);
     
-    // Check if within 15-20 min window of high impact US news (12:15 to 13:45 UTC or 17:45 to 19:15 UTC)
-    const isRedWindow = ((h === 12 && m >= 15) || (h === 13 && m <= 45) || (h === 17 && m >= 45) || (h === 18) || (h === 19 && m <= 15));
-    if (isRedWindow) {
-        pill.style.background = "rgba(239, 68, 68, 0.25)";
-        pill.style.borderColor = "var(--color-red)";
-        pill.style.color = "#fca5a5";
-        pill.innerHTML = `🔴 RED FOLDER SHIELD: 15M FREEZE ACTIVE (CAPITAL PROTECTED)`;
-    } else {
-        pill.style.background = "rgba(0, 245, 155, 0.15)";
-        pill.style.borderColor = "rgba(0, 245, 155, 0.4)";
-        pill.style.color = "var(--color-green)";
-        pill.innerHTML = `🟢 CLEAN ORDER FLOW: 1H➔5M CASCADE ACTIVE (SAFE)`;
+    if (pill) {
+        if (status.isRed) {
+            pill.style.background = "rgba(239, 68, 68, 0.25)";
+            pill.style.borderColor = "var(--color-red)";
+            pill.style.color = "#fca5a5";
+            pill.innerHTML = status.statusText;
+        } else {
+            pill.style.background = "rgba(0, 245, 155, 0.15)";
+            pill.style.borderColor = "rgba(0, 245, 155, 0.4)";
+            pill.style.color = "var(--color-green)";
+            pill.innerHTML = status.statusText;
+        }
     }
+    
+    updateModule08RegimeBanner(status);
 }
 window.updateRedFolderShield = updateRedFolderShield;
+
+function updateModule08RegimeBanner(status) {
+    const banner = document.getElementById("newsRegimeBanner");
+    if (!banner) return;
+    
+    if (status.isRed) {
+        banner.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(30, 10, 15, 0.8) 100%)";
+        banner.style.borderColor = "var(--color-red)";
+        banner.innerHTML = `
+            <div class="nrb-left">
+                <span class="nrb-indicator" style="background:var(--color-red); box-shadow:0 0 12px var(--color-red); animation:pulse 1s infinite;"></span>
+                <div>
+                    <div class="nrb-title" style="color:#fca5a5;">🔴 ACTIVE HIGH-IMPACT FREEZE: ${status.activeEvent.name} (${status.activeEvent.timeUtc} UTC)</div>
+                    <div class="nrb-desc" style="color:#fecaca;">Market inside high-volatility ±30m release danger window. Spreads expand 5x-10x. New SMC trade generation and cockpit executions are strictly locked.</div>
+                </div>
+            </div>
+            <div class="nrb-right">
+                <span class="nrb-badge-good" style="background:var(--color-red); color:#fff; border-color:#f87171;">⛔ RED FOLDER FREEZE ACTIVE</span>
+            </div>
+        `;
+    } else if (status.todayEvents && status.todayEvents.length > 0) {
+        const nextToday = status.todayEvents[0];
+        banner.style.background = "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(20, 18, 10, 0.8) 100%)";
+        banner.style.borderColor = "rgba(245, 158, 11, 0.4)";
+        banner.innerHTML = `
+            <div class="nrb-left">
+                <span class="nrb-indicator pulse-yellow"></span>
+                <div>
+                    <div class="nrb-title" style="color:#fbbf24;">🟡 CAUTION: HIGH-IMPACT EVENT SCHEDULED TODAY • ${nextToday.name} (${nextToday.timeUtc} UTC)</div>
+                    <div class="nrb-desc">Currently outside the ±30m freeze window. Tighten open trailing stops ahead of release. Precision entries allowed until freeze window activates.</div>
+                </div>
+            </div>
+            <div class="nrb-right">
+                <span class="nrb-badge-good" style="background:rgba(245,158,11,0.2); color:#fbbf24; border-color:#fbbf24;">⏳ UPCOMING TODAY</span>
+            </div>
+        `;
+    } else {
+        banner.style.background = "linear-gradient(135deg, rgba(0, 245, 155, 0.08) 0%, rgba(10, 20, 16, 0.8) 100%)";
+        banner.style.borderColor = "rgba(0, 245, 155, 0.35)";
+        banner.innerHTML = `
+            <div class="nrb-left">
+                <span class="nrb-indicator" style="background:var(--color-green); box-shadow:0 0 10px rgba(0,245,155,0.6);"></span>
+                <div>
+                    <div class="nrb-title" style="color:var(--color-green);">🟢 CURRENT STATUS: NO RED FOLDER EVENTS TODAY (SAFE TO TRADE)</div>
+                    <div class="nrb-desc">Zero high-impact USD economic releases scheduled today. Spreads are tight & normal. SMC Order Blocks, FVGs & Market Structure are operating with peak institutional technical edge!</div>
+                </div>
+            </div>
+            <div class="nrb-right">
+                <span class="nrb-badge-good">🛡️ SAFE FOR PRECISION SMC ENTRIES</span>
+            </div>
+        `;
+    }
+}
+window.updateModule08RegimeBanner = updateModule08RegimeBanner;
 
 function renderAutonomousFeed() {
     const container = document.getElementById("breakingFeedGrid");
@@ -3473,15 +3624,14 @@ function evaluateLiveConfluences(trade) {
             : (liveGold < sl - 0.50 ? `Live Spot $${liveGold.toFixed(2)} breached SL ($${sl.toFixed(2)}) • Setup Invalidated` : `Live Spot $${liveGold.toFixed(2)} awaiting dip toward $${entry.toFixed(2)}`);
     }
 
-    // Pillar 4: High-Impact Red Folder News Shield (15M Buffer)
-    const now = new Date();
-    const h = now.getUTCHours();
-    const m = now.getUTCMinutes();
-    const isRedWindow = ((h === 12 && m >= 15) || (h === 13 && m <= 45) || (h === 17 && m >= 45) || (h === 18) || (h === 19 && m <= 15));
-    const newsPass = !isRedWindow;
+    // Pillar 4: Dynamic High-Impact Red Folder News Shield (±30M Buffer)
+    const newsStatus = getRedFolderEventStatus(new Date());
+    const newsPass = !newsStatus.isRed;
     const newsDesc = newsPass
-        ? `News Shield Safe • No high-impact CPI/NFP/FOMC release in active ±15m window`
-        : `News Shield ACTIVE • In ±15m high-impact release danger window (Entries frozen)`;
+        ? (newsStatus.todayEvents.length === 0
+            ? `News Shield Safe • No high-impact Red Folder events scheduled today (Safe to trade)`
+            : `News Shield Safe • Outside ±30m high-impact release danger window`)
+        : `News Shield ACTIVE • In ±30m window for ${newsStatus.activeEvent?.name || 'Red Folder Event'} (Entries frozen)`;
 
     const conditions = [
         { id: "dxy", name: "1. Macro Dollar Flow", pass: dxyPass, desc: dxyDesc },
@@ -6720,71 +6870,36 @@ function tickLiveClock() {
     } catch(e) {}
 }
 
-// REAL-TIME AUTONOMOUS ROLLING MACRO CALENDAR (100% TIED TO REAL TIME)
+// REAL-TIME AUTONOMOUS MACRO CALENDAR (MAPPED DIRECTLY FROM HIGH_IMPACT_USD_EVENTS)
 function getDynamicHighImpactCalendar() {
-    const now = new Date();
-    // Compute PKT time components (UTC + 5 hours)
-    const pktNow = new Date(now.getTime() + (5 * 3600 * 1000));
-    const curYear = pktNow.getUTCFullYear();
-    const curMonth = pktNow.getUTCMonth(); // 0-11
-    const curDate = pktNow.getUTCDate();
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    const events = [];
+    return HIGH_IMPACT_USD_EVENTS.map(ev => {
+        const [y, m, d] = ev.date.split("-").map(Number);
+        const [hh, mm] = ev.timeUtc.split(":").map(Number);
+        const utcTimestamp = Date.UTC(y, m - 1, d, hh, mm, 0);
 
-    function createPktEvent(year, month, date, hour, min, title, impact, description) {
-        // Date object in UTC equivalent:
-        const utcTimestamp = Date.UTC(year, month, date, hour - 5, min, 0);
-        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const dayName = dayNames[new Date(Date.UTC(year, month, date)).getUTCDay()];
-        const monthName = monthNames[month];
-        
-        const hr12 = hour % 12 === 0 ? 12 : hour % 12;
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const timeStr = `${String(hr12).padStart(2, "0")}:${String(min).padStart(2, "0")} ${ampm} PKT (${dayName}, ${monthName} ${date})`;
+        // Compute PKT time (UTC + 5 hours)
+        const pktDate = new Date(utcTimestamp + (5 * 3600 * 1000));
+        const pktDay = pktDate.getUTCDate();
+        const pktMonth = pktDate.getUTCMonth();
+        const pktHour = pktDate.getUTCHours();
+        const pktMin = pktDate.getUTCMinutes();
+        const dayName = dayNames[pktDate.getUTCDay()];
+        const monthName = monthNames[pktMonth];
+        const hr12 = pktHour % 12 === 0 ? 12 : pktHour % 12;
+        const ampm = pktHour >= 12 ? "PM" : "AM";
+        const timeStr = `${String(hr12).padStart(2, "0")}:${String(pktMin).padStart(2, "0")} ${ampm} PKT (${dayName}, ${monthName} ${pktDay})`;
 
         return {
-            title,
+            title: ev.name,
             timeStr,
             targetTimestamp: utcTimestamp,
-            impact: impact || "HIGH",
-            description: description || "Direct volatility catalyst on Gold and Dollar."
+            impact: ev.impact,
+            description: ev.note || "Direct macro volatility catalyst on Gold and Dollar."
         };
-    }
-
-    // Generate rolling events from -2 days to +8 days
-    for (let offset = -2; offset <= 8; offset++) {
-        const d = new Date(Date.UTC(curYear, curMonth, curDate + offset));
-        const y = d.getUTCFullYear();
-        const m = d.getUTCMonth();
-        const dt = d.getUTCDate();
-        const dayOfWeek = d.getUTCDay();
-
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip weekends
-
-        // Daily London Session Open & Judas Swing (12:00 PM PKT)
-        events.push(createPktEvent(y, m, dt, 12, 0, "London Session Open & Judas Swing", "MEDIUM", "European desks inject fresh liquidity."));
-
-        // Daily Wall Street / NY Session Open (06:30 PM PKT)
-        events.push(createPktEvent(y, m, dt, 18, 30, "Wall Street & NY Session Open Bell", "HIGH", "US equity and metals opening order surge."));
-
-        if (dayOfWeek === 1) { // Monday
-            events.push(createPktEvent(y, m, dt, 19, 0, "US ISM Manufacturing PMI & Price Index", "HIGH", "Key benchmark for industrial inflation."));
-        } else if (dayOfWeek === 2) { // Tuesday
-            events.push(createPktEvent(y, m, dt, 19, 0, "US JOLTs Job Openings Report", "HIGH", "Labor market tightness indicator."));
-        } else if (dayOfWeek === 3) { // Wednesday
-            events.push(createPktEvent(y, m, dt, 17, 30, "US CPI (Consumer Price Index / Core Inflation)", "HIGH", "Primary interest rate expectations catalyst."));
-            events.push(createPktEvent(y, m, dt, 23, 0, "FOMC Monetary Policy Remarks", "HIGH", "Federal Reserve policy speech."));
-        } else if (dayOfWeek === 4) { // Thursday
-            events.push(createPktEvent(y, m, dt, 17, 30, "US PPI (Producer Price Index) & Jobless Claims", "HIGH", "Wholesale pipeline inflation + weekly employment check."));
-        } else if (dayOfWeek === 5) { // Friday
-            events.push(createPktEvent(y, m, dt, 17, 30, "US Non-Farm Payrolls (NFP) & Unemployment", "HIGH", "Blockbuster monthly labor data release."));
-            events.push(createPktEvent(y, m, dt, 19, 0, "Univ. of Michigan Consumer Sentiment Survey", "HIGH", "Consumer confidence and inflation expectation."));
-        }
-    }
-
-    events.sort((a, b) => a.targetTimestamp - b.targetTimestamp);
-    return events;
+    }).sort((a, b) => a.targetTimestamp - b.targetTimestamp);
 }
 
 function tickCountdownClock() {
@@ -6830,7 +6945,7 @@ function tickCountdownClock() {
 
         if (elReleased && lastReleased) {
             const relDiffMins = Math.max(1, Math.round((now - lastReleased.targetTimestamp) / 60000));
-            const relTimeAgo = relDiffMins < 60 ? `${relDiffMins}m ago` : `${Math.floor(relDiffMins/60)}h ago`;
+            const relTimeAgo = relDiffMins < 60 ? `${relDiffMins}m ago` : (relDiffMins < 1440 ? `${Math.floor(relDiffMins/60)}h ago` : `${Math.floor(relDiffMins/1440)}d ago`);
             elReleased.innerHTML = `✅ ${lastReleased.title.split("(")[0].trim()}: RELEASED (${relTimeAgo} at ${lastReleased.timeStr.split("(")[0].trim()})`;
         }
 
@@ -6838,6 +6953,12 @@ function tickCountdownClock() {
         if (elH) elH.innerText = String(hrs).padStart(2, "0");
         if (elM) elM.innerText = String(mins).padStart(2, "0");
         if (elS) elS.innerText = String(secs).padStart(2, "0");
+
+        // Continuously refresh news shield & Module 08 countdown timers
+        updateRedFolderShield();
+        if (typeof updateModule08Countdowns === "function") {
+            updateModule08Countdowns();
+        }
     } catch(e) {
         console.warn("tickCountdownClock error:", e);
     }
@@ -6933,6 +7054,7 @@ function initTerminalSystem() {
     renderLiveWireStream();
     renderAutonomousFeed();
     renderTerminalUI();
+    renderModule08NewsSchedule();
 
     tickLiveClock();
     setInterval(tickLiveClock, 1000);
@@ -7786,8 +7908,286 @@ function setupUnifiedPerformanceJournalListeners() {
     // Buttons are hooked directly via window methods or event listeners
 }
 
+// =========================================================================
+// SECTION 5: MODULE 08 INSTITUTIONAL ECONOMIC CALENDAR MATRIX & CARDS
+// =========================================================================
+const STRATEGIC_MACRO_CARDS = [
+    // 1. Past Case Study: NFP
+    {
+        id: "card_nfp_past",
+        name: "US Non-Farm Payrolls (NFP) & Unemployment Rate",
+        date: "2026-09-04",
+        timeUtc: "12:30",
+        impact: "red",
+        currency: "USD",
+        volatility: "⚡ Past Move: -$100 Flush",
+        ruleTitle: "📜 HISTORICAL CASE STUDY & REACTION:",
+        verdict: "🔴 JOBS BLOWOUT (142K, UNEMP 4.2%) ➔ GOLD HISTORIC -1,000 PIPS FLUSH ▼",
+        target: "• Bearish Trigger: Actual labor strength forced market to prune aggressive rate cut pricing ➔ DXY rally ➔ Gold dump.<br>• Bullish Trigger: Required massive miss below 100K to warrant buying.",
+        reason: "🧠 ASAL WAJAH (WHY IT HAPPENED): Retailers bought the initial wick thinking labor was weak; Smart Money swept prior session highs at $4,476 and distributed $100 down.",
+        tradeRule: "⚠️ INSTITUTIONAL RULE: Never enter during initial 120s news wick. Wait for liquidity sweep + 5M Bearish FVG displacement body close."
+    },
+    // 2. Past Case Study: CPI
+    {
+        id: "card_cpi_past",
+        name: "US CPI (Consumer Price Index Inflation Report)",
+        date: "2026-09-09",
+        timeUtc: "12:30",
+        impact: "red",
+        currency: "USD",
+        volatility: "⚡ $40 - $70 Volatility Shock",
+        ruleTitle: "🎯 CPI 2-SIDED REACTION RULE:",
+        verdict: "🔴 HEADLINE 2.5% YoY ➔ RAPID TWO-SIDED LIQUIDITY SWEEP, THEN RESUMED TREND",
+        target: "🟢 AGAR INFLATION COOL / LOW AAYI ➔ GOLD ROCKETS $50–$70 ▲ (STRONG BUY)<br>🔴 AGAR INFLATION HOT / HIGH AAYI ➔ GOLD CRASHES $50–$70 ▼ (STRONG SELL)",
+        reason: "🧠 ASAL WAJAH: Inflation directly dictates Fed rate cuts. Both sides swept within 6 minutes, wiping out breakout orders on both ends.",
+        tradeRule: "🛡️ SHIELD RECAP: ±30m freeze strictly preserved terminal capital while retail stop losses were harvested."
+    },
+    // 3. Past Case Study: Core PPI & Jobless Claims
+    {
+        id: "card_ppi_claims_past",
+        name: "US Core PPI & Initial Jobless Claims",
+        date: "2026-09-10",
+        timeUtc: "12:30",
+        impact: "orange",
+        currency: "USD",
+        volatility: "⚡ $15 - $25 Intraday Scalp",
+        ruleTitle: "🎯 PPI & CLAIMS REACTION RULE:",
+        verdict: "🟠 CLAIMS 230K & CORE PPI +0.3% ➔ INITIAL SHOCK ABSORBED, CLEAN 5M FLOW",
+        target: "🔴 CLAIMS KAM AAYE (< 215k) ➔ DOLLAR UP ➔ GOLD DIPS -$15 ▼ (SELL SCALP)<br>🟢 CLAIMS ZYADA AAYE (> 235k) ➔ DOLLAR DOWN ➔ GOLD PUMPS +$20 ▲ (BUY SCALP)",
+        reason: "🧠 ASAL WAJAH: Claims reflect instantaneous weekly labor stress. Stable claims allowed orderly price delivery without slippage.",
+        tradeRule: "🎯 EXECUTION RULE: 15M break of structure (BOS) ke sath ride karein. Fakeouts Red folders se bohot kam hote hain."
+    },
+    // 4. Upcoming: Retail Sales (Tomorrow Sept 15)
+    {
+        id: "card_retail_sales",
+        name: "US Core Retail Sales MoM",
+        date: "2026-09-15",
+        timeUtc: "12:30",
+        impact: "orange",
+        currency: "USD",
+        volatility: "⚡ $25 - $45 Volatility",
+        ruleTitle: "🎯 RETAIL SALES 2-SIDED REACTION RULE:",
+        verdict: "🔴 SALES STRONG (> +0.4%) ➔ DOLLAR UP ➔ GOLD PULLS BACK -$20 ▼",
+        target: "🟢 SALES WEAK (< 0.0%) ➔ CONSUMER SLOWDOWN ➔ GOLD SURGES +$25 ▲",
+        reason: "🧠 ASAL WAJAH: Consumer spending drives 70% of the US economy. Final major data checkpoint before FOMC rate announcement.",
+        tradeRule: "⚠️ INSTITUTIONAL RULE: Wait 15 minutes post-release for initial chop to settle. Enter only on 5M FVG retest."
+    },
+    // 5. Upcoming: FOMC Rate Decision (Wednesday Sept 16)
+    {
+        id: "card_fomc_decision",
+        name: "FOMC Rate Decision & Fed Economic Projections",
+        date: "2026-09-16",
+        timeUtc: "18:00",
+        impact: "red",
+        currency: "USD",
+        volatility: "⚡ $50 - $90 Multi-Day Trend",
+        ruleTitle: "🎯 FOMC RATE DECISION REACTION RULE:",
+        verdict: "🔴 HAWKISH HOLD / 25bps CAUTIOUS CUT ➔ GOLD DUMPS $40–$60 ▼",
+        target: "🟢 50bps AGGRESSIVE JUMBO CUT ➔ GOLD PARABOLIC EXPLOSION $60–$90+ ▲",
+        reason: "🧠 ASAL WAJAH: Cycle-defining monetary policy decision. Summary of Economic Projections (dot-plot) reveals the 2026 terminal rate path.",
+        tradeRule: "⛔ STRICT FREEZE: Complete ±30m execution freeze. Zero limit or market orders during the statement release."
+    },
+    // 6. Upcoming: FOMC Powell Press Conference (Wednesday Sept 16)
+    {
+        id: "card_fomc_presser",
+        name: "FOMC Press Conference (Fed Chair Powell)",
+        date: "2026-09-16",
+        timeUtc: "18:30",
+        impact: "red",
+        currency: "USD",
+        volatility: "⚡ $60 - $120 Directional Expansion",
+        ruleTitle: "🎯 POWELL PRESS CONFERENCE REACTION RULE:",
+        verdict: "🔴 HAWKISH TONE (STUBBORN INFLATION) ➔ DOLLAR SURGE ➔ GOLD FLUSH ▼",
+        target: "🟢 DOVISH TONE (LABOR PRIORITY / CONTINUED CUTS) ➔ DOLLAR DUMP ➔ GOLD PARABOLIC ▲",
+        reason: "🧠 ASAL WAJAH: Powell's unscripted answers during the Q&A generate the true sustained multi-day directional trend.",
+        tradeRule: "🛡️ CAPITAL SHIELD: Absolute freeze across press conference. Trade only after 19:30 UTC when range establishes."
+    },
+    // 7. Upcoming: Initial Jobless Claims & Philly Fed (Thursday Sept 17)
+    {
+        id: "card_claims_post_fomc",
+        name: "US Initial Jobless Claims & Philly Fed Index",
+        date: "2026-09-17",
+        timeUtc: "12:30",
+        impact: "orange",
+        currency: "USD",
+        volatility: "⚡ $15 - $30 Post-FOMC Momentum",
+        ruleTitle: "🎯 POST-FOMC CLAIMS REACTION RULE:",
+        verdict: "🟠 CLAIMS MISS (> 235k) ➔ CONFIRMS EASING CYCLE ➔ GOLD ACCELERATES ▲",
+        target: "🔴 CLAIMS BEAT (< 215k) ➔ COUNTER-TREND PULLBACK -$15 ▼",
+        reason: "🧠 ASAL WAJAH: First post-FOMC economic data print. Validates whether the labor market deterioration warranted Fed easing.",
+        tradeRule: "🎯 EXECUTION RULE: Trade aligned with the prevailing post-FOMC 15M trend on confirmed 5M POI pullback."
+    },
+    // 8. Upcoming: BOJ Interest Rate Decision (Friday Sept 18)
+    {
+        id: "card_boj_decision",
+        name: "BOJ (Bank of Japan) Interest Rate Decision",
+        date: "2026-09-18",
+        timeUtc: "03:00",
+        impact: "red",
+        currency: "USD",
+        volatility: "⚡ 150 - 250 Pips on USD/JPY",
+        ruleTitle: "🎯 BOJ 2-SIDED REACTION RULE:",
+        verdict: "🔴 BOJ HAWKISH / RATE HIKE ➔ USD/JPY CRASHES 150–250 PIPS ▼ (GLOBAL RISK SHIFT)",
+        target: "🟢 BOJ DOVISH / NO HIKE ➔ USD/JPY ROCKETS HIGHER ▲ (CARRY EXPANSION)",
+        reason: "🧠 ASAL WAJAH: Japanese Yen carry trade unwinding directly impacts global liquidity, sending instantaneous ripple effects into gold spot.",
+        tradeRule: "⚠️ INSTITUTIONAL RULE: Verify USD/JPY 15M structure before trading Asian session gold breakouts."
+    },
+    // 9. Smart Money Yellow: Wholesale Inventories
+    {
+        id: "card_inventories",
+        name: "US Wholesale Inventories & Factory Orders",
+        date: "2026-09-18",
+        timeUtc: "14:00",
+        impact: "yellow",
+        currency: "USD",
+        volatility: "⚡ 5 - 12 Pips (Zero Slippage)",
+        ruleTitle: "🎯 SMART MONEY LEADING INVENTORY RULE:",
+        verdict: "🟡 INVENTORIES RISING (> +0.5%) ➔ DEMAND SLOWDOWN ➔ PRE-CPI CLUE ▲ (BUY ACCUMULATION)",
+        target: "• Smart Money Secret: Retailers skip this as 'boring'. Rising inventories mean unsold goods ➔ economic drag ➔ institutions silently accumulate.",
+        reason: "🧠 KYUN TRADE KAREIN? Zero news spikes, broker spreads at minimum, and 5M sniper FVGs hold with 90%+ edge.",
+        tradeRule: "💎 SMART MONEY SECRET: Zero slippage, tightest broker spreads, and ICT Order Blocks respect cleanly."
+    },
+    // 10. Smart Money Yellow: Regional Fed Surveys
+    {
+        id: "card_regional_fed",
+        name: "Regional Fed Manufacturing Survey (Richmond & KC)",
+        date: "2026-09-22",
+        timeUtc: "14:00",
+        impact: "yellow",
+        currency: "USD",
+        volatility: "⚡ 6 - 15 Pips (Clean Flow)",
+        ruleTitle: "🎯 PRICES PAID SUB-INDEX RULE:",
+        verdict: "🟡 INPUT PRICES COOLING ➔ FACTORY COSTS DOWN ➔ PRE-CPI POSITIONING",
+        target: "• Smart Money Secret: Factory input costs drop 3 weeks before official CPI reflects it. Smart Money positions early.",
+        reason: "🧠 ASAL WAJAH: Smart Money uses yellow data to build structural positions before the public reacts to red headline releases.",
+        tradeRule: "💎 EXECUTION RULE: 1H Demand zone par limit order lagane ka golden window."
+    },
+    // 11. Smart Money Yellow: UoM Inflation Expectations
+    {
+        id: "card_uom_expectations",
+        name: "UoM 5-Year Inflation Expectations (Final Revision)",
+        date: "2026-09-25",
+        timeUtc: "14:00",
+        impact: "yellow",
+        currency: "USD",
+        volatility: "⚡ 8 - 18 Pips (Zero Trap)",
+        ruleTitle: "🎯 FED ANCHOR EXPECTATION RULE:",
+        verdict: "🟡 5-YEAR EXPECTATION ANCHORED (2.9%–3.0%) ➔ NO SURPRISE FED SHOCK ➔ PURE SMC HARMONY",
+        target: "• Smart Money Secret: Stable long-term expectations eliminate sudden monetary surprises, ensuring high-probability SMC order flow.",
+        reason: "🧠 ASAL WAJAH: Safe trading window without algorithmic trap spikes. Ideal for 15M/1H order block execution.",
+        tradeRule: "🛡️ SAFE WINDOW: Peak reliability for SMC limit order executions."
+    }
+];
+window.STRATEGIC_MACRO_CARDS = STRATEGIC_MACRO_CARDS;
+
+let currentNewsFilter = "all";
+
+function renderModule08NewsSchedule() {
+    const grid = document.getElementById("actionableCardsGrid");
+    if (!grid) return;
+
+    const now = Date.now();
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    grid.innerHTML = STRATEGIC_MACRO_CARDS.map(card => {
+        const [y, m, d] = card.date.split("-").map(Number);
+        const [hh, mm] = card.timeUtc.split(":").map(Number);
+        const eventUtcMs = Date.UTC(y, m - 1, d, hh, mm, 0);
+
+        // Convert to PKT for display
+        const pktDate = new Date(eventUtcMs + 5 * 3600 * 1000);
+        const pktDayName = dayNames[pktDate.getUTCDay()];
+        const pktMonthName = monthNames[pktDate.getUTCMonth()];
+        const pktDay = pktDate.getUTCDate();
+        const pktHr = pktDate.getUTCHours();
+        const pktMin = pktDate.getUTCMinutes();
+        const hr12 = pktHr % 12 === 0 ? 12 : pktHr % 12;
+        const ampm = pktHr >= 12 ? "PM" : "AM";
+        const pktTimeStr = `${pktDayName}, ${pktDay} ${pktMonthName} 2026 • ${String(hr12).padStart(2, "0")}:${String(pktMin).padStart(2, "0")} ${ampm} PKT`;
+
+        const diffMs = eventUtcMs - now;
+        const isPast = diffMs < -30 * 60 * 1000;
+        const isActive = Math.abs(diffMs) <= 30 * 60 * 1000;
+
+        let statusPillHtml = "";
+        let badgeHtml = "";
+
+        if (isPast) {
+            statusPillHtml = `<span class="act-time-pill" style="color:var(--color-green); border-color:rgba(0,245,155,0.4); background:rgba(0,245,155,0.1);">📅 RELEASED: ${pktTimeStr}</span>`;
+            badgeHtml = `<span style="font-size:0.68rem; background:rgba(0,245,155,0.2); color:var(--color-green); padding:2px 6px; border-radius:4px; border:1px solid var(--color-green);">✅ PAST RELEASE: VERIFIED</span>`;
+        } else if (isActive) {
+            statusPillHtml = `<span class="act-time-pill" style="color:#f87171; border-color:var(--color-red); background:rgba(239,68,68,0.25); animation:pulse 1.2s infinite;">🚨 LIVE NOW: ±30M CAPITAL FREEZE</span>`;
+            badgeHtml = `<span style="font-size:0.68rem; background:rgba(239,68,68,0.3); color:#fca5a5; padding:2px 6px; border-radius:4px; border:1px solid var(--color-red); animation:pulse 1.2s infinite;">🔴 DANGER: IN RELEASE WINDOW</span>`;
+        } else {
+            statusPillHtml = `<span class="act-time-pill" style="color:var(--color-cyan); border-color:rgba(0,210,255,0.4); background:rgba(0,210,255,0.1);">📅 DATE: ${pktTimeStr}</span>`;
+            badgeHtml = `<span style="font-size:0.68rem; background:rgba(0,210,255,0.2); color:var(--color-cyan); padding:2px 6px; border-radius:4px; border:1px solid rgba(0,210,255,0.4);"><span class="act-countdown" data-event-utc="${eventUtcMs}">⏳ CALCULATING...</span></span>`;
+        }
+
+        const volClass = card.impact === "orange" ? "tag-orange" : (card.impact === "yellow" ? "tag-yellow" : "");
+        const cardImpactClass = `impact-${card.impact}`;
+        const fvbClass = card.impact === "yellow" ? "badge-yellow" : (card.impact === "orange" ? "badge-bull" : "badge-bear");
+
+        const displayStyle = (currentNewsFilter === "all" || card.impact === currentNewsFilter) ? "flex" : "none";
+
+        return `
+            <div class="act-card ${cardImpactClass} ${fvbClass}" data-impact="${card.impact}" style="display:${displayStyle};">
+                <div class="act-card-header">
+                    <div class="act-title-group">
+                        <span class="act-title">${card.name} ${badgeHtml}</span>
+                        ${statusPillHtml}
+                    </div>
+                    <span class="act-volatility-tag ${volClass}">${card.volatility}</span>
+                </div>
+                <div class="final-verdict-banner ${fvbClass}">
+                    <div class="fvb-title">${card.ruleTitle}</div>
+                    <div class="fvb-verdict">${card.verdict}</div>
+                    <div class="fvb-target">${card.target}</div>
+                </div>
+                <div class="verdict-reason-box">
+                    <strong>${card.reason}</strong>
+                    <div style="margin-top:6px; font-size:0.75rem; color:#94a3b8;">${card.tradeRule}</div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    updateModule08Countdowns();
+}
+window.renderModule08NewsSchedule = renderModule08NewsSchedule;
+
+function updateModule08Countdowns() {
+    const now = Date.now();
+    const countdowns = document.querySelectorAll(".act-countdown");
+    countdowns.forEach(el => {
+        const utcMs = Number(el.getAttribute("data-event-utc"));
+        if (!utcMs) return;
+        const diff = utcMs - now;
+        if (diff > 0) {
+            const totalSecs = Math.floor(diff / 1000);
+            const days = Math.floor(totalSecs / 86400);
+            const hrs = Math.floor((totalSecs % 86400) / 3600);
+            const mins = Math.floor((totalSecs % 3600) / 60);
+            const secs = totalSecs % 60;
+            if (days > 0) {
+                el.innerText = `⏳ In ${days}d ${hrs}h ${mins}m ${secs}s`;
+            } else if (hrs > 0) {
+                el.innerText = `⏳ In ${hrs}h ${mins}m ${secs}s`;
+            } else {
+                el.innerText = `⏳ In ${mins}m ${secs}s`;
+            }
+        } else if (Math.abs(diff) <= 30 * 60 * 1000) {
+            el.innerHTML = `<span style="color:#f87171; font-weight:900;">🔴 FREEZE ACTIVE</span>`;
+        } else {
+            el.innerHTML = `<span style="color:var(--color-green);">✅ RELEASED</span>`;
+        }
+    });
+}
+window.updateModule08Countdowns = updateModule08Countdowns;
+
 // SECTION 5: INSTITUTIONAL NEWS FILTER (RED / YELLOW / ORANGE)
 function filterNewsCards(impact) {
+    currentNewsFilter = impact;
     const cards = document.querySelectorAll("#actionableCardsGrid .act-card");
     const buttons = document.querySelectorAll(".btn-news-filter");
 
