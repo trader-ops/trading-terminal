@@ -139,13 +139,13 @@
             <div class="cockpit-segmented-tabs" id="cockpitSegmentedTabs">
                 <button type="button" class="cockpit-tab-btn active" id="btnTabMainSetup" onclick="switchTradingCockpitTab('main')">
                     <span style="font-size:1.15rem;">👑</span>
-                    <span>1. MAIN SUPREME SETUPS (1H➔5M Cascade • 80–150 Pips)</span>
+                    <span>1. TRACK 1: SUPREME INSTITUTIONAL SETUPS (4H Trend Anchor • +4.64R • 72.7% WR)</span>
                     <span class="tab-pill-badge main">SUPREME PIPELINE</span>
                 </button>
                 <button type="button" class="cockpit-tab-btn" id="btnTabQuickScalp" onclick="switchTradingCockpitTab('scalp')">
                     <span style="font-size:1.15rem;">⚡</span>
-                    <span>2. QUICK SIDEWAYS SCALPS (Range Box • 20–30 Pips Quick Profit)</span>
-                    <span class="tab-pill-badge scalp">QUICK SCALPS</span>
+                    <span>2. TRACK 2 SCALPS (QUARANTINED • -0.86R / 33.3% WR)</span>
+                    <span class="tab-pill-badge scalp" style="background:rgba(239,68,68,0.2); color:#ef4444; border-color:#ef4444;">QUARANTINED (-0.86R)</span>
                 </button>
             </div>
 
@@ -812,9 +812,9 @@
             <div id="viewQuickScalp" class="cockpit-tab-view" style="display:none; margin-top:16px;">
                 <div class="module-header-banner" style="background: linear-gradient(90deg, rgba(56,189,248,0.15), rgba(15,23,42,0.6)); border-radius:8px; margin-bottom:12px;">
                     <div class="mhb-left">
-                        <span class="module-number-pill" style="background:rgba(56,189,248,0.25); color:#38bdf8; border:1px solid #38bdf8;">TAB 2: SCALP BOX</span>
+                        <span class="module-number-pill" style="background:rgba(239,68,68,0.25); color:#f87171; border:1px solid #ef4444;">TRACK 2: QUARANTINED</span>
                         <div class="module-title-wrap">
-                            <h2 class="module-main-title" style="color:#e0f2fe;">🌀 SIDEWAYS &amp; CONSOLIDATION BOX SCALPER</h2>
+                            <h2 class="module-main-title" style="color:#fee2e2;">🛑 TRACK 2 (RANGE SCALPER) — DEACTIVATED / QUARANTINED</h2>
                             <span class="module-main-desc" id="cspMainDesc" style="color:#94a3b8;">Jab market Main Setup tak na pohnche aur darmian mein phase, to sirf ye 2 trades lein:</span>
                         </div>
                     </div>
@@ -2124,29 +2124,29 @@
             <!-- 5-BOX METRICS RIBBON (ACCURACY, PROFIT, WIN/LOSS, R:R, DRAWDOWN) -->
             <div class="ai-stats-ribbon">
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
-                    <span class="asr-label">🎯 Completed Win Rate:</span>
-                    <span class="asr-val green" id="statAccuracyRate">76.5%</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">13 Wins • 4 Losses (76.5% Precision)</span>
+                    <span class="asr-label">🎯 Audit Win Rate:</span>
+                    <span class="asr-val green" id="statAccuracyRate">58.8%</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">10 Wins • 7 Losses (72.7% Supreme)</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
-                    <span class="asr-label">💰 Net Realized Profit:</span>
-                    <span class="asr-val green" id="statRealizedProfit">+$414.00</span>
-                    <span style="font-size:0.68rem; color:var(--color-cyan); font-family:var(--font-mono);">+82.8% on $500 Account</span>
+                    <span class="asr-label">💰 Realized Net Profit (R):</span>
+                    <span class="asr-val green" id="statRealizedProfit">+3.78R</span>
+                    <span style="font-size:0.68rem; color:var(--color-cyan); font-family:var(--font-mono);">+$38.31 on $10 Risk Base</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
-                    <span class="asr-label">🔥 Total Trades Called:</span>
-                    <span class="asr-val cyan" id="statTotalTradesCalled">17 Total Trades</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">13 Won • 4 Stopped • Live Active</span>
+                    <span class="asr-label">🔥 Profit Factor (OOS):</span>
+                    <span class="asr-val cyan" id="statTotalTradesCalled">1.76 PF</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">2.46 Out-of-Sample • 17 Verified</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
-                    <span class="asr-label">📈 Realized Avg R:R:</span>
-                    <span class="asr-val cyan" id="statRealizedAvgRr">1 : 6.8</span>
-                    <span style="font-size:0.68rem; color:var(--color-green); font-family:var(--font-mono);">Asian + London Targets Smashed</span>
+                    <span class="asr-label">📈 Trade Frequency:</span>
+                    <span class="asr-val cyan" id="statRealizedAvgRr">~1–2 / Wk</span>
+                    <span style="font-size:0.68rem; color:var(--color-green); font-family:var(--font-mono);">Institutional Prime Focus</span>
                 </div>
-                <div class="asr-box" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.04);">
-                    <span class="asr-label">🛡️ Max Drawdown / Risk:</span>
-                    <span class="asr-val red" id="statMaxDrawdown">$4.50 (0.9%)</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">Micro SL Protected Capital</span>
+                <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
+                    <span class="asr-label">🛡️ Verification Status:</span>
+                    <span class="asr-val green" id="statMaxDrawdown">100% VERIFIED</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">60D Lookahead-Free + Friction</span>
                 </div>
             </div>
 
@@ -2162,7 +2162,7 @@
                 </div>
                 <div class="asm-right">
                     <span class="asm-status-pill" id="activeTradeStatusPill" style="background:rgba(0,245,155,0.2); color:var(--color-green); border:1px solid var(--color-green);">
-                        👑 13 WINS LOCKED • 4 LOSSES (76.5% WIN RATE) • PIPELINE AUTO-DETECT ACTIVE
+                        👑 10 WINS LOCKED • 7 LOSSES (58.8% FULL / 72.7% SUPREME) • 100% AUDIT-VERIFIED
                     </span>
                     <button class="btn-section-refresh highlight-btn" onclick="autoDetectAndSyncPipelineToJournal()" id="btnSyncActiveTrade">
                         <span>⚡ AUTO-DETECT PIPELINE</span>
