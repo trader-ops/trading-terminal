@@ -128,7 +128,7 @@
                     <span id="omniActiveNewsText">⚡ Live Institutional Order Flow • 👑 1–2 Prime Setups / Week • 4H Trend Anchor Engine Active</span> • ⏳ Session: <strong>Live Liquidity Scan</strong>
                 </div>
                 <div class="occs-right">
-                    <span class="occs-pill">👑 <strong>1–2 Setups / Wk</strong> • Edge: <strong>1.33 PF / 48.8% WR (+7.32R)</strong></span>
+                    <span class="occs-pill">👑 <strong>1-Year Audited Edge:</strong> <strong>1.18 PF / 41.5% WR (+76.45R • 740 Trades)</strong></span>
                     <span class="occs-pill">🛡️ Risk: <strong>2% Per Trade ($10 Base)</strong></span>
                 </div>
             </div>
@@ -139,12 +139,12 @@
             <div class="cockpit-segmented-tabs" id="cockpitSegmentedTabs">
                 <button type="button" class="cockpit-tab-btn active" id="btnTabMainSetup" onclick="switchTradingCockpitTab('main')">
                     <span style="font-size:1.15rem;">👑</span>
-                    <span>1. TRACK 1: SUPREME INSTITUTIONAL SETUPS (4H Trend Anchor • +7.32R • 48.8% WR • 1.33 PF)</span>
+                    <span>1. TRACK 1: SUPREME INSTITUTIONAL SETUPS (1Y Audit: +69.99R • 40.9% WR • 1.16 PF • -39.5R DD)</span>
                     <span class="tab-pill-badge main">SUPREME PIPELINE</span>
                 </button>
                 <button type="button" class="cockpit-tab-btn" id="btnTabQuickScalp" onclick="switchTradingCockpitTab('scalp')">
                     <span style="font-size:1.15rem;">⚡</span>
-                    <span>2. TRACK 2 SCALPS (QUARANTINED • +0.25R / 46.7% WR)</span>
+                    <span>2. TRACK 2: ASIAN RANGE SCALPS (1Y Audit: +6.46R • 58.3% WR • 1.64 PF • -4.9R DD)</span>
                     <span class="tab-pill-badge scalp" style="background:rgba(239,68,68,0.2); color:#ef4444; border-color:#ef4444;">QUARANTINED (-0.86R)</span>
                 </button>
             </div>
@@ -234,7 +234,7 @@
                                 🛡️ 2% Risk Per Trade ($10 Base) • 1.5R Partial + Breakeven Lock
                             </span>
                             <span style="background:rgba(245,158,11,0.15); border:1px solid #fbbf24; color:#fbbf24; font-family:var(--font-mono); font-size:0.72rem; font-weight:800; padding:3px 8px; border-radius:4px;">
-                                🔥 Verified Out-of-Sample: 48.8% Win Rate • 1.33 Profit Factor (+7.32R Net Edge)
+                                🔥 Verified 1-Year Dataset: 41.5% Win Rate • 1.18 Profit Factor (+76.45R Net • -42.4R Max DD)
                             </span>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -259,7 +259,7 @@
                                 <button type="button" class="btn-copy-cockpit" id="btnCopyCockpitOrder" onclick="copyCockpitOrder()" title="Copy active order parameters (Entry, SL, TP) to MT5 clipboard" style="background:rgba(0,245,155,0.15); border:1.5px solid #00f59b; color:#00f59b; font-family:var(--font-mono); font-weight:900; font-size:0.8rem; padding:7px 16px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;">
                                     <span>📋 COPY ORDER TO MT5</span>
                                 </button>
-                                <span id="macWinProbBadge" style="background:rgba(0,245,155,0.15); border:1px solid rgba(0,245,155,0.4); color:#00f59b; font-size:0.75rem; font-weight:900; font-family:var(--font-mono); padding:5px 10px; border-radius:6px;">👑 QUANT REGIME: 48.8% WR / 1.33 PF (+7.32R)</span>
+                                <span id="macWinProbBadge" style="background:rgba(0,245,155,0.15); border:1px solid rgba(0,245,155,0.4); color:#00f59b; font-size:0.75rem; font-weight:900; font-family:var(--font-mono); padding:5px 10px; border-radius:6px;">👑 QUANT REGIME: 41.5% WR / 1.18 PF (+76.45R • 740 Trades)</span>
                             </div>
                         </div>
 
@@ -721,7 +721,7 @@
                                     🎯 Targets: 1.5R Partial Lock ➔ 3.5R Macro Runner
                                 </span>
                                 <span class="omni-rr-badge-highlight" id="omniTopRrBadge" style="font-size:0.80rem; font-family:var(--font-mono); font-weight:900; background:linear-gradient(90deg, rgba(14,165,233,0.2) 0%, rgba(16,185,129,0.2) 100%); color:#38bdf8; border:1.5px solid #0284c7; padding:4px 10px; border-radius:6px;">
-                                    ⚖️ 48.8% WR • 1.33 PF (+7.32R)
+                                    ⚖️ 41.5% WR • 1.18 PF (+76.45R)
                                 </span>
                                 <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">Live TradingView:</span>
                                 <strong style="color:var(--color-cyan); font-size:1.05rem; font-family:var(--font-mono);" id="omniLivePrice">Streaming...</strong>
@@ -2125,28 +2125,109 @@
             <div class="ai-stats-ribbon">
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
                     <span class="asr-label">🎯 Audit Win Rate:</span>
-                    <span class="asr-val green" id="statAccuracyRate">58.8%</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">10 Wins • 7 Losses (72.7% Supreme)</span>
+                    <span class="asr-val green" id="statAccuracyRate">41.5%</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">307 Wins • 433 Losses (40.9% Supreme • 58.3% Scalp)</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
                     <span class="asr-label">💰 Realized Net Profit (R):</span>
-                    <span class="asr-val green" id="statRealizedProfit">+3.78R</span>
-                    <span style="font-size:0.68rem; color:var(--color-cyan); font-family:var(--font-mono);">+$38.31 on $10 Risk Base</span>
+                    <span class="asr-val green" id="statRealizedProfit">+76.45R</span>
+                    <span style="font-size:0.68rem; color:var(--color-cyan); font-family:var(--font-mono);">+$764.50 Net (on $10 Risk Base)</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
                     <span class="asr-label">🔥 Profit Factor (OOS):</span>
-                    <span class="asr-val cyan" id="statTotalTradesCalled">1.76 PF</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">2.46 Out-of-Sample • 17 Verified</span>
+                    <span class="asr-val cyan" id="statTotalTradesCalled">1.18 PF</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">740 Trades Audited (1-Year Sample)</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
                     <span class="asr-label">📈 Trade Frequency:</span>
-                    <span class="asr-val cyan" id="statRealizedAvgRr">~1–2 / Wk</span>
-                    <span style="font-size:0.68rem; color:var(--color-green); font-family:var(--font-mono);">Institutional Prime Focus</span>
+                    <span class="asr-val red" id="statRealizedAvgRr">-42.4R</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">Max Drawdown (16L Streak)</span>
                 </div>
                 <div class="asr-box" style="border-color:rgba(0,245,155,0.3); background:rgba(0,245,155,0.04);">
                     <span class="asr-label">🛡️ Verification Status:</span>
-                    <span class="asr-val green" id="statMaxDrawdown">100% VERIFIED</span>
-                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">60D Lookahead-Free + Friction</span>
+                    <span class="asr-val green" id="statMaxDrawdown">1-YEAR AUDITED</span>
+                    <span style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">Lookahead-Free + Friction</span>
+                </div>
+            </div>
+
+            
+            <!-- RISK-OF-RUIN & CAPITAL SURVIVAL MATRIX -->
+            <div class="ror-calculator-card" id="rorCalculatorCard">
+                <div class="ror-header">
+                    <div class="ror-title-wrap">
+                        <span class="ror-badge">🛡️ QUANT RISK ARBITER</span>
+                        <h3 class="ror-title">Risk-of-Ruin &amp; Capital Survival Matrix</h3>
+                        <span class="ror-subtitle">Mathematical probability of account drawdown &amp; ruin based on 1-year historical losing streaks (-42.4R Max DD)</span>
+                    </div>
+                    <div class="ror-presets">
+                        <span class="ror-preset-label">Risk Per Trade:</span>
+                        <button type="button" class="btn-ror-preset" onclick="setRorRiskPreset(0.25)">0.25% ($1.25)</button>
+                        <button type="button" class="btn-ror-preset" onclick="setRorRiskPreset(0.50)">0.50% ($2.50)</button>
+                        <button type="button" class="btn-ror-preset" onclick="setRorRiskPreset(1.00)">1.00% ($5.00)</button>
+                        <button type="button" class="btn-ror-preset active" onclick="setRorRiskPreset(2.00)">2.00% ($10.00)</button>
+                    </div>
+                </div>
+                
+                <div class="ror-grid">
+                    <div class="ror-inputs-col">
+                        <div class="ror-input-group">
+                            <label>Account Equity ($USD):</label>
+                            <input type="number" id="rorInputBalance" value="500" min="50" step="50" oninput="recalculateRiskOfRuin()">
+                        </div>
+                        <div class="ror-input-group">
+                            <label>Risk Per Trade (%):</label>
+                            <input type="number" id="rorInputRiskPct" value="2.0" min="0.1" max="10" step="0.1" oninput="recalculateRiskOfRuin()">
+                        </div>
+                        <div class="ror-input-group">
+                            <label>Strategy Win Rate (%):</label>
+                            <input type="number" id="rorInputWinRate" value="41.5" min="10" max="90" step="0.1" oninput="recalculateRiskOfRuin()">
+                        </div>
+                        <div class="ror-input-group">
+                            <label>Profit Factor (PF):</label>
+                            <input type="number" id="rorInputPf" value="1.18" min="0.5" max="5.0" step="0.01" oninput="recalculateRiskOfRuin()">
+                        </div>
+                    </div>
+
+                    <div class="ror-metrics-col">
+                        <div class="ror-metric-box danger" id="rorBoxProb">
+                            <span class="ror-box-label">⚠️ Risk of Ruin Probability</span>
+                            <span class="ror-box-val text-down" id="rorValProb">HIGH RISK</span>
+                            <span class="ror-box-desc" id="rorDescProb">Chance of 50%+ capital loss</span>
+                        </div>
+                        <div class="ror-metric-box danger" id="rorBoxDrawdown">
+                            <span class="ror-box-label">📉 1Y Max Drawdown (-42.4R)</span>
+                            <span class="ror-box-val text-down" id="rorValDrawdown">-$423.98</span>
+                            <span class="ror-box-desc" id="rorDescDrawdown">84.8% of $500 Account Destroyed</span>
+                        </div>
+                        <div class="ror-metric-box danger" id="rorBoxStreak">
+                            <span class="ror-box-label">🛑 Max Loss Streak (16 Trades)</span>
+                            <span class="ror-box-val text-down" id="rorValStreak">-$160.00</span>
+                            <span class="ror-box-desc" id="rorDescStreak">-32.0% Account Hit in 1 Streak</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capital Survival Matrix Table -->
+                <div class="ror-table-wrap">
+                    <table class="ror-table">
+                        <thead>
+                            <tr>
+                                <th>Position Sizing Tier</th>
+                                <th>Dollar Risk ($)</th>
+                                <th>16-Loss Streak Hit</th>
+                                <th>-42.4R Max DD Hit</th>
+                                <th>Remaining Capital</th>
+                                <th>Safety Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rorMatrixBody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ror-verdict-banner" id="rorVerdictBanner">
+                    <!-- Live Verdict text injected by JS -->
                 </div>
             </div>
 
@@ -2162,7 +2243,7 @@
                 </div>
                 <div class="asm-right">
                     <span class="asm-status-pill" id="activeTradeStatusPill" style="background:rgba(0,245,155,0.2); color:var(--color-green); border:1px solid var(--color-green);">
-                        👑 21 WINS LOCKED • 22 LOSSES (48.8% SUPREME WR / 1.33 PF) • 100% AUDIT-VERIFIED
+                        👑 307 WINS LOCKED • 433 LOSSES (41.5% WR / 1.18 PF • -42.4R DD) • 1-YEAR AUDIT-VERIFIED
                     </span>
                     <button class="btn-section-refresh highlight-btn" onclick="autoDetectAndSyncPipelineToJournal()" id="btnSyncActiveTrade">
                         <span>⚡ AUTO-DETECT PIPELINE</span>
@@ -2308,7 +2389,7 @@
         </footer>
     </div>
 
-    <script src="js/app.js?v=1789270000"></script>
+    <script src="js/app.js?v=1789280000"></script>
 
     <script>
     // Immediate Clock Runner (Never shows --:--:--)

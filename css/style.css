@@ -6915,3 +6915,209 @@ body {
 
 
 
+
+/* =======================================================
+   RISK-OF-RUIN & CAPITAL SURVIVAL MATRIX
+   ======================================================= */
+.ror-calculator-card {
+    background: linear-gradient(135deg, #090e17 0%, #0d1527 100%);
+    border: 1px solid rgba(255, 59, 92, 0.35);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+.ror-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ror-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ror-badge {
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: #ff3b5c;
+    background: rgba(255, 59, 92, 0.12);
+    border: 1px solid rgba(255, 59, 92, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+.ror-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 2px 0 0 0;
+}
+.ror-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.ror-presets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ror-preset-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+.btn-ror-preset {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-ror-preset:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+.btn-ror-preset.active {
+    background: rgba(255, 59, 92, 0.2);
+    border-color: #ff3b5c;
+    color: #ff3b5c;
+}
+.btn-ror-preset.safe-active {
+    background: rgba(0, 245, 155, 0.2);
+    border-color: #00f59b;
+    color: #00f59b;
+}
+.ror-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.ror-inputs-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.ror-input-group label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.ror-input-group input {
+    width: 100%;
+    background: #060a12;
+    border: 1px solid var(--border-highlight);
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 6px;
+    outline: none;
+}
+.ror-input-group input:focus {
+    border-color: var(--color-cyan);
+}
+.ror-metrics-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+}
+.ror-metric-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.ror-metric-box.danger {
+    border-color: rgba(255, 59, 92, 0.4);
+    background: rgba(255, 59, 92, 0.05);
+}
+.ror-metric-box.safe {
+    border-color: rgba(0, 245, 155, 0.4);
+    background: rgba(0, 245, 155, 0.05);
+}
+.ror-box-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+.ror-box-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+}
+.ror-box-desc {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.ror-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.ror-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    text-align: left;
+}
+.ror-table th {
+    background: #090e17;
+    padding: 8px 12px;
+    color: var(--text-muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+.ror-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    white-space: nowrap;
+}
+.ror-table tr.tier-danger td {
+    background: rgba(255, 59, 92, 0.08);
+    color: #fca5a5;
+}
+.ror-table tr.tier-safe td {
+    background: rgba(0, 245, 155, 0.06);
+    color: #6ee7b7;
+}
+.ror-verdict-banner {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    background: rgba(255, 59, 92, 0.12);
+    border: 1px solid rgba(255, 59, 92, 0.35);
+    color: #fca5a5;
+}
