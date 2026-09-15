@@ -2195,6 +2195,110 @@ function resetAutoRangeBox() {
 }
 window.resetAutoRangeBox = resetAutoRangeBox;
 
+// =========================================================================
+// $50/DAY TARGET COCKPIT & 6-TRADE DAILY PIPELINE ENGINE
+// =========================================================================
+let DAILY_TARGET_STATE = {
+    targetUsd: 50.0,
+    riskPerTradeUsd: 12.50,
+    bankedUsd: 0.0,
+    wins: 0,
+    losses: 0,
+    consecutiveLosses: 0,
+    slots: [
+        { name: "Asian Box Scalp", session: "00:00–06:00 UTC", status: "READY: SCANNING", pnl: 0 },
+        { name: "London Open Sweep", session: "07:00–09:00 UTC", status: "PENDING SESSION", pnl: 0 },
+        { name: "London Trend Pullback", session: "09:00–11:00 UTC", status: "PENDING SESSION", pnl: 0 },
+        { name: "NY Open Judas Impulse", session: "12:30–14:30 UTC", status: "PENDING SESSION", pnl: 0 },
+        { name: "NY Reversal Retest", session: "14:30–16:30 UTC", status: "PENDING SESSION", pnl: 0 },
+        { name: "Late NY Closing Runner", session: "16:30–18:00 UTC", status: "PENDING SESSION", pnl: 0 }
+    ]
+};
+
+function copyDtcOrderToClipboard() {
+    const pair = document.getElementById("dtcParamPair") ? document.getElementById("dtcParamPair").innerText : "XAUUSD";
+    const entry = document.getElementById("dtcParamEntry") ? document.getElementById("dtcParamEntry").innerText : "";
+    const sl = document.getElementById("dtcParamSl") ? document.getElementById("dtcParamSl").innerText : "";
+    const tp1 = document.getElementById("dtcParamTp1") ? document.getElementById("dtcParamTp1").innerText : "";
+    const tp2 = document.getElementById("dtcParamTp2") ? document.getElementById("dtcParamTp2").innerText : "";
+    const lot = document.getElementById("dtcParamLot") ? document.getElementById("dtcParamLot").innerText : "0.03 Lots";
+    const badge = document.getElementById("dtcActionBadge") ? document.getElementById("dtcActionBadge").innerText : "TRADE";
+    const type = badge.includes("BUY") ? "BUY LIMIT / BUY STOP" : "SELL LIMIT / SELL STOP";
+
+    const orderText = `=== MT5 INSTITUTIONAL DIRECT ORDER ===\nPair: ${pair}\nAction: ${type}\nLot Size: ${lot} (Exact $12.50 Risk / 2.5% on $500)\nEntry: ${entry}\nStop Loss: ${sl}\nTP1 (50% + Move to BE): ${tp1}\nTP2 (50% Runner): ${tp2}\nTarget: $50/Day Pipeline Quota\n======================================`;
+
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(orderText).then(() => {
+            const btn = document.getElementById("dtcBtnCopy");
+            if (btn) {
+                const orig = btn.innerHTML;
+                btn.innerHTML = `<span>✅ ORDER COPIED TO CLIPBOARD!</span>`;
+                btn.style.background = "#00f59b";
+                btn.style.color = "#000";
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.style.background = "";
+                    btn.style.color = "";
+                }, 2500);
+            }
+        }).catch(() => { alert(orderText); });
+    } else {
+        alert(orderText);
+    }
+}
+window.copyDtcOrderToClipboard = copyDtcOrderToClipboard;
+
+function resetDailyTargetProgress() {
+    if (confirm("Reset today's $50 daily progress back to 0/6 trades ($0.00 banked)?")) {
+        DAILY_TARGET_STATE.bankedUsd = 0.0;
+        DAILY_TARGET_STATE.wins = 0;
+        DAILY_TARGET_STATE.losses = 0;
+        DAILY_TARGET_STATE.consecutiveLosses = 0;
+        syncDailyTargetCockpitUI();
+    }
+}
+window.resetDailyTargetProgress = resetDailyTargetProgress;
+
+function syncDailyTargetCockpitUI() {
+    const valBanked = document.getElementById("dtcValBanked");
+    const progressFill = document.getElementById("dtcProgressBarFill");
+    const progressSub = document.getElementById("dtcProgressSub");
+    const valRecord = document.getElementById("dtcValRecord");
+    const recordSub = document.getElementById("dtcRecordSub");
+    const valCircuit = document.getElementById("dtcValCircuit");
+    const statusPill = document.getElementById("dtcStatusPill");
+
+    const totalTrades = DAILY_TARGET_STATE.wins + DAILY_TARGET_STATE.losses;
+    const netR = (DAILY_TARGET_STATE.wins * 1.5) - (DAILY_TARGET_STATE.losses * 1.0);
+    const banked = DAILY_TARGET_STATE.bankedUsd;
+    const pct = Math.min(100, Math.max(0, (banked / DAILY_TARGET_STATE.targetUsd) * 100));
+
+    if (valBanked) valBanked.innerText = `$${banked.toFixed(2)} / $50.00`;
+    if (progressFill) progressFill.style.width = `${pct}%`;
+    if (progressSub) progressSub.innerText = `${pct.toFixed(0)}% of $50 Daily Goal`;
+    if (valRecord) valRecord.innerText = `${DAILY_TARGET_STATE.wins}W - ${DAILY_TARGET_STATE.losses}L`;
+    if (recordSub) recordSub.innerText = `${netR >= 0 ? "+" : ""}${netR.toFixed(2)}R Net Realized Today`;
+
+    if (valCircuit) {
+        valCircuit.innerText = `${DAILY_TARGET_STATE.consecutiveLosses}/3 Losses`;
+        valCircuit.style.color = DAILY_TARGET_STATE.consecutiveLosses >= 3 ? "#ff4d6d" : "#00f59b";
+    }
+
+    if (statusPill) {
+        if (DAILY_TARGET_STATE.consecutiveLosses >= 3) {
+            statusPill.className = "dtc-status-pill stop";
+            statusPill.innerHTML = `🛑 <strong>CIRCUIT BREAKER: 3 LOSSES (SHUT SCREEN TO PROTECT CAPITAL)</strong>`;
+        } else if (banked >= DAILY_TARGET_STATE.targetUsd) {
+            statusPill.className = "dtc-status-pill";
+            statusPill.innerHTML = `🎉 <strong>$50 GOAL ACHIEVED! (LOCK PROFITS FOR TODAY)</strong>`;
+        } else {
+            statusPill.className = "dtc-status-pill";
+            statusPill.innerHTML = `🟢 <strong>ACTIVE: ${totalTrades}/6 TRADES TAKEN ($${(50 - banked).toFixed(2)} TO GO)</strong>`;
+        }
+    }
+}
+window.syncDailyTargetCockpitUI = syncDailyTargetCockpitUI;
+
 // ==========================================
 // ==========================================
 // DYNAMIC MULTI-TRADE PROGRESSION PIPELINE (10-TRADE DAILY SEQUENCE)
@@ -4334,6 +4438,38 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     omniScorePill.style.background = "rgba(255, 59, 92, 0.15)";
                     omniScorePill.style.borderColor = "var(--color-red)";
                 }
+            }
+        }
+
+        // SYNCHRONIZE $50/DAY TARGET COCKPIT DIRECTIVE
+        const dtcParamEntry = document.getElementById("dtcParamEntry");
+        const dtcParamSl = document.getElementById("dtcParamSl");
+        const dtcParamTp1 = document.getElementById("dtcParamTp1");
+        const dtcParamTp2 = document.getElementById("dtcParamTp2");
+        const dtcParamLot = document.getElementById("dtcParamLot");
+        const dtcActionBadge = document.getElementById("dtcActionBadge");
+        const dtcDirReason = document.getElementById("dtcDirReason");
+
+        if (activeTrade) {
+            if (dtcParamEntry) dtcParamEntry.innerText = "$" + entryPrice.toFixed(2);
+            if (dtcParamSl) dtcParamSl.innerText = "$" + slPrice.toFixed(2);
+            if (dtcParamTp1) dtcParamTp1.innerText = "$" + tp1Price.toFixed(2);
+            if (dtcParamTp2) dtcParamTp2.innerText = "$" + tp2Price.toFixed(2);
+
+            const riskDollars = 12.50; // Calibrated for $50/day target
+            const riskPoints = Math.max(0.5, Math.abs(entryPrice - slPrice));
+            const calculatedLot = Math.max(0.01, (riskDollars / (riskPoints * 100))).toFixed(2);
+            if (dtcParamLot) dtcParamLot.innerText = `${calculatedLot} Lots`;
+
+            if (dtcActionBadge) {
+                dtcActionBadge.className = isTradeBear ? "dtc-dir-action-badge sell" : "dtc-dir-action-badge buy";
+                dtcActionBadge.innerText = isTradeBear ? "🔴 SELL PULLBACK (HIGH CONFLUENCE)" : "🟢 BUY DIP (HIGH CONFLUENCE)";
+            }
+            if (dtcDirReason) {
+                const situationText = isTradeBear
+                    ? `👉 <strong>INSTITUTIONAL SITUATION:</strong> Upper BSL Liquidity Swept • DXY sustaining bullish pressure • 1H Displacement Body confirmed ➔ Execute SELL on 5M FVG retest at $${entryPrice.toFixed(2)} with $12.50 risk.`
+                    : `👉 <strong>INSTITUTIONAL SITUATION:</strong> Lower SSL Liquidity Swept • Dollar fading • 1H Bullish Displacement confirmed ➔ Execute BUY on 5M FVG retest at $${entryPrice.toFixed(2)} with $12.50 risk.`;
+                dtcDirReason.innerHTML = situationText;
             }
         }
 

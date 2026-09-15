@@ -7121,3 +7121,321 @@ body {
     border: 1px solid rgba(255, 59, 92, 0.35);
     color: #fca5a5;
 }
+
+/* ==========================================================================
+   $50/DAY TARGET COCKPIT & 6-TRADE DAILY PIPELINE
+   ========================================================================== */
+.dtc-card {
+    background: linear-gradient(135deg, #070d18 0%, #0d172a 100%);
+    border: 2px solid rgba(0, 245, 155, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+.dtc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.dtc-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dtc-badge {
+    align-self: flex-start;
+    font-size: 0.68rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    color: #00f59b;
+    background: rgba(0, 245, 155, 0.15);
+    border: 1px solid #00f59b;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.dtc-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.dtc-subtitle {
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.dtc-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    background: rgba(0, 245, 155, 0.15);
+    color: #00f59b;
+    border: 1.5px solid #00f59b;
+}
+
+.dtc-status-pill.stop {
+    background: rgba(255, 59, 92, 0.2);
+    color: #ff4d6d;
+    border-color: #ff4d6d;
+}
+
+.dtc-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.dtc-metric-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dtc-metric-label {
+    font-size: 0.70rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.dtc-metric-val {
+    font-size: 1.30rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    color: #38bdf8;
+}
+
+.dtc-metric-sub {
+    font-size: 0.70rem;
+    color: #64748b;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+}
+
+.dtc-progress-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: #0b1322;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dtc-progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #00f59b);
+    transition: width 0.4s ease;
+}
+
+/* 6-Trade Pipeline Strip */
+.dtc-slots-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dtc-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.dtc-slot-card {
+    background: #090e18;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.dtc-slot-card.won {
+    border-color: rgba(0, 245, 155, 0.5);
+    background: rgba(0, 245, 155, 0.05);
+}
+
+.dtc-slot-card.lost {
+    border-color: rgba(255, 59, 92, 0.5);
+    background: rgba(255, 59, 92, 0.05);
+}
+
+.dtc-slot-card.active {
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.dtc-slot-num {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+    font-family: var(--font-mono);
+}
+
+.dtc-slot-name {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
+.dtc-slot-session {
+    font-size: 0.65rem;
+    color: #64748b;
+}
+
+.dtc-slot-status {
+    font-size: 0.72rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    margin-top: 4px;
+}
+
+.dtc-slot-status.pending { color: #94a3b8; }
+.dtc-slot-status.active { color: #38bdf8; }
+.dtc-slot-status.won { color: #00f59b; }
+.dtc-slot-status.lost { color: #ff4d6d; }
+
+/* Live Situation Directive */
+.dtc-directive-box {
+    background: #080d16;
+    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dtc-dir-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+}
+
+.dtc-dir-label {
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #38bdf8;
+    letter-spacing: 0.5px;
+}
+
+.dtc-dir-action-badge {
+    font-size: 0.85rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+
+.dtc-dir-action-badge.sell {
+    background: rgba(255, 59, 92, 0.2);
+    color: #ff4d6d;
+    border: 1px solid #ff4d6d;
+}
+
+.dtc-dir-action-badge.buy {
+    background: rgba(0, 245, 155, 0.2);
+    color: #00f59b;
+    border: 1px solid #00f59b;
+}
+
+.dtc-dir-action-badge.wait {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid #fbbf24;
+}
+
+.dtc-dir-reason {
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+.dtc-order-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dtc-param-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dtc-param-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.dtc-param-val {
+    font-size: 1.05rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+}
+
+.dtc-copy-btn {
+    background: rgba(0, 245, 155, 0.15);
+    border: 1.5px solid #00f59b;
+    color: #00f59b;
+    font-family: var(--font-mono);
+    font-weight: 900;
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: all 0.2s ease;
+}
+
+.dtc-copy-btn:hover {
+    background: #00f59b;
+    color: #000;
+}
+

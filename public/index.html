@@ -134,6 +134,141 @@
             </div>
 
             <!-- ============================================================
+                 $50/DAY TARGET COCKPIT & 6-TRADE DAILY PIPELINE
+                 ============================================================ -->
+            <div class="dtc-card" id="dailyTargetCockpit">
+                <div class="dtc-header">
+                    <div class="dtc-title-group">
+                        <span class="dtc-badge">🎯 QUANT TARGET ACCELERATOR</span>
+                        <h3 class="dtc-title">$50 / Day Target Command Cockpit</h3>
+                        <span class="dtc-subtitle">6 High-Conviction Trades Across Asian, London &amp; NY Sessions • Sized for $12.50 Risk (2.5% on $500)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="dtc-status-pill" id="dtcStatusPill">
+                            🟢 <strong>ACTIVE: 0/6 TRADES TAKEN ($50 TARGET OPEN)</strong>
+                        </span>
+                        <button type="button" class="btn-section-refresh highlight-btn" onclick="resetDailyTargetProgress()" title="Reset Today's Target" style="padding:6px 12px; font-size:0.72rem;">
+                            <span>🔄 RESET DAY</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 Metrics Boxes -->
+                <div class="dtc-metrics-grid">
+                    <div class="dtc-metric-box">
+                        <span class="dtc-metric-label">💰 Today's Banked Profit</span>
+                        <div class="dtc-metric-val" id="dtcValBanked" style="color:var(--color-green);">$0.00 / $50.00</div>
+                        <div class="dtc-progress-bar-wrap">
+                            <div class="dtc-progress-bar-fill" id="dtcProgressBarFill" style="width:0%;"></div>
+                        </div>
+                        <span class="dtc-metric-sub" id="dtcProgressSub">0% of $50 Daily Goal</span>
+                    </div>
+                    <div class="dtc-metric-box">
+                        <span class="dtc-metric-label">📊 Today's Record</span>
+                        <div class="dtc-metric-val" id="dtcValRecord">0W - 0L</div>
+                        <span class="dtc-metric-sub" id="dtcRecordSub">+0.00R Net Realized Today</span>
+                    </div>
+                    <div class="dtc-metric-box">
+                        <span class="dtc-metric-label">🛡️ Sizing for $50/Day</span>
+                        <div class="dtc-metric-val" id="dtcValSizing" style="color:var(--color-cyan);">$12.50 / Trade</div>
+                        <span class="dtc-metric-sub" id="dtcLotSub">MT5 Safe Lot: 0.02 – 0.03 Lots</span>
+                    </div>
+                    <div class="dtc-metric-box">
+                        <span class="dtc-metric-label">🛑 Circuit Breaker</span>
+                        <div class="dtc-metric-val" id="dtcValCircuit" style="color:#00f59b;">0/3 Losses</div>
+                        <span class="dtc-metric-sub" id="dtcCircuitSub">Max 3 Consecutive Losses Allowed</span>
+                    </div>
+                </div>
+
+                <!-- 6 Daily Slots -->
+                <div class="dtc-slots-title">
+                    <span>📅 TODAY'S 6-TRADE EXECUTION PIPELINE:</span>
+                    <span style="font-size:0.7rem; color:var(--color-cyan);">4 Wins @ +1.5R - 2 Losses @ -1.0R = +$50.00 Guaranteed</span>
+                </div>
+                <div class="dtc-slots-grid" id="dtcSlotsGrid">
+                    <div class="dtc-slot-card active" id="dtcSlot1">
+                        <span class="dtc-slot-num">SLOT 01 / 06</span>
+                        <span class="dtc-slot-name">Asian Box Scalp</span>
+                        <span class="dtc-slot-session">00:00–06:00 UTC</span>
+                        <span class="dtc-slot-status active" id="dtcSlot1Status">READY: SCANNING</span>
+                    </div>
+                    <div class="dtc-slot-card" id="dtcSlot2">
+                        <span class="dtc-slot-num">SLOT 02 / 06</span>
+                        <span class="dtc-slot-name">London Open Sweep</span>
+                        <span class="dtc-slot-session">07:00–09:00 UTC</span>
+                        <span class="dtc-slot-status pending" id="dtcSlot2Status">PENDING SESSION</span>
+                    </div>
+                    <div class="dtc-slot-card" id="dtcSlot3">
+                        <span class="dtc-slot-num">SLOT 03 / 06</span>
+                        <span class="dtc-slot-name">London Trend Pullback</span>
+                        <span class="dtc-slot-session">09:00–11:00 UTC</span>
+                        <span class="dtc-slot-status pending" id="dtcSlot3Status">PENDING SESSION</span>
+                    </div>
+                    <div class="dtc-slot-card" id="dtcSlot4">
+                        <span class="dtc-slot-num">SLOT 04 / 06</span>
+                        <span class="dtc-slot-name">NY Open Judas Impulse</span>
+                        <span class="dtc-slot-session">12:30–14:30 UTC</span>
+                        <span class="dtc-slot-status pending" id="dtcSlot4Status">PENDING SESSION</span>
+                    </div>
+                    <div class="dtc-slot-card" id="dtcSlot5">
+                        <span class="dtc-slot-num">SLOT 05 / 06</span>
+                        <span class="dtc-slot-name">NY Reversal Retest</span>
+                        <span class="dtc-slot-session">14:30–16:30 UTC</span>
+                        <span class="dtc-slot-status pending" id="dtcSlot5Status">PENDING SESSION</span>
+                    </div>
+                    <div class="dtc-slot-card" id="dtcSlot6">
+                        <span class="dtc-slot-num">SLOT 06 / 06</span>
+                        <span class="dtc-slot-name">Late NY Closing Runner</span>
+                        <span class="dtc-slot-session">16:30–18:00 UTC</span>
+                        <span class="dtc-slot-status pending" id="dtcSlot6Status">PENDING SESSION</span>
+                    </div>
+                </div>
+
+                <!-- Live Situation Directive -->
+                <div class="dtc-directive-box" id="dtcDirectiveBox">
+                    <div class="dtc-dir-top">
+                        <span class="dtc-dir-label">⚡ LIVE SITUATION ARBITER &amp; MT5 ORDER DIRECTIVE:</span>
+                        <span class="dtc-dir-action-badge sell" id="dtcActionBadge">🔴 SELL SIGNAL (HIGH CONFLUENCE)</span>
+                    </div>
+                    <div class="dtc-dir-reason" id="dtcDirReason">
+                        👉 <strong>INSTITUTIONAL SITUATION:</strong> Buy-Side Liquidity (BSL) swept at <strong>$4,364.50</strong> with Dollar Index (DXY) 99.18 sustaining. 1H Displacement Body formed; execute sell order on pullback into 5M FVG.
+                    </div>
+                    <div class="dtc-order-params-grid">
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">Pair</span>
+                            <span class="dtc-param-val" style="color:#f1f5f9;" id="dtcParamPair">XAUUSD</span>
+                        </div>
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">Entry Price</span>
+                            <span class="dtc-param-val" style="color:#38bdf8;" id="dtcParamEntry">$4,364.50</span>
+                        </div>
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">Stop Loss (SL)</span>
+                            <span class="dtc-param-val" style="color:#ff4d6d;" id="dtcParamSl">$4,369.00</span>
+                        </div>
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">TP1 (Partial 50% + BE)</span>
+                            <span class="dtc-param-val" style="color:#00f59b;" id="dtcParamTp1">$4,357.75</span>
+                        </div>
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">TP2 (Full Runner 50%)</span>
+                            <span class="dtc-param-val" style="color:#00f59b;" id="dtcParamTp2">$4,348.75</span>
+                        </div>
+                        <div class="dtc-param-col">
+                            <span class="dtc-param-title">MT5 Lot Size ($12.50)</span>
+                            <span class="dtc-param-val" style="color:#fbbf24;" id="dtcParamLot">0.03 Lots</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:4px;">
+                        <button type="button" class="dtc-copy-btn" id="dtcBtnCopy" onclick="copyDtcOrderToClipboard()">
+                            <span>📋 COPY EXACT ORDER TO MT5</span>
+                        </button>
+                        <span style="font-size:0.75rem; color:#94a3b8; font-family:var(--font-mono);">Risk: <strong>$12.50</strong> • TP1 Gain: <strong>+$18.75</strong> • TP2 Gain: <strong>+$43.75</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
                  TWO-MODE COCKPIT CONTROLLER: STRICT SEPARATION (NO MIXING!)
                  ============================================================ -->
             <div class="cockpit-segmented-tabs" id="cockpitSegmentedTabs">
@@ -2389,7 +2524,7 @@
         </footer>
     </div>
 
-    <script src="js/app.js?v=1789280000"></script>
+    <script src="js/app.js?v=1789290000"></script>
 
     <script>
     // Immediate Clock Runner (Never shows --:--:--)
