@@ -598,7 +598,7 @@ let ASSETS = {
         changePct: "-0.11%",
         tvSymbol: "FX:EURUSD",
         volatility: 0.0003,
-        confidence: "92%",
+        confidence: "Bearish Retest Confluence (Inverse DXY)",
         driver: "Live forex exchange feed. Tested 1.1617 support zone."
     },
     "GBPUSD": {
@@ -609,7 +609,7 @@ let ASSETS = {
         changePct: "-0.10%",
         tvSymbol: "FX:GBPUSD",
         volatility: 0.0003,
-        confidence: "91%",
+        confidence: "Trend Follow Confluence (15M Structure)",
         driver: "Live forex exchange feed at 1.3510."
     },
     "USDJPY": {
@@ -1451,11 +1451,14 @@ function updateConsolidationBox(cp) {
         const rboxInsightText = document.getElementById("rboxInsightText");
 
         if (rboxSentimentTag && rboxMeterFill && rboxRegimeBadge && rboxTrapVal && rboxInsightText) {
+            const rangeSpan = high - low;
+            const pricePosPct = rangeSpan > 0 ? Math.max(0, Math.min(100, Math.round(((cp - low) / rangeSpan) * 100))) : 50;
+            rboxMeterFill.style.width = `${pricePosPct}%`;
+
             if (zoneClass === "sell") {
-                rboxSentimentTag.textContent = "FOMO GREED (86%)";
+                rboxSentimentTag.textContent = `RANGE HIGH / RESISTANCE (${pricePosPct}%)`;
                 rboxSentimentTag.style.color = "#ef4444";
                 rboxSentimentText.textContent = "🔥 Retail Breakout Buyers Trapped";
-                rboxMeterFill.style.width = "86%";
                 rboxMeterFill.style.background = "linear-gradient(90deg, #f59e0b, #ef4444)";
 
                 rboxRegimeBadge.textContent = "🏛️ RANGE-HIGH LIQUIDITY FADE";
@@ -1470,10 +1473,9 @@ function updateConsolidationBox(cp) {
 
                 rboxInsightText.textContent = `Retailers box ki chhat ($${high.toFixed(2)}) todne par breakout buy kar rahe hain. Smart Money yahan se price reverse karke darmian ($${eq.toFixed(2)}) ki taraf dhakelega — SELL FADE SCALP!`;
             } else if (zoneClass === "buy") {
-                rboxSentimentTag.textContent = "PANIC FEAR (18%)";
+                rboxSentimentTag.textContent = `RANGE LOW / SUPPORT (${pricePosPct}%)`;
                 rboxSentimentTag.style.color = "#38bdf8";
                 rboxSentimentText.textContent = "😨 Retail Breakdown Sellers Trapped";
-                rboxMeterFill.style.width = "18%";
                 rboxMeterFill.style.background = "linear-gradient(90deg, #38bdf8, #818cf8)";
 
                 rboxRegimeBadge.textContent = "🏛️ RANGE-LOW BOUNCE ABSORPTION";
@@ -1488,10 +1490,9 @@ function updateConsolidationBox(cp) {
 
                 rboxInsightText.textContent = `Retailers box k farsh ($${low.toFixed(2)}) girne par panic sell kar rahe hain. Smart Money inka Stop Loss kha k discount par buy kar raha hai — BUY BOUNCE SCALP!`;
             } else {
-                rboxSentimentTag.textContent = "CHOP / EQUILIBRIUM (50%)";
+                rboxSentimentTag.textContent = `EQUILIBRIUM (${pricePosPct}%)`;
                 rboxSentimentTag.style.color = "#fbbf24";
                 rboxSentimentText.textContent = "⚖️ Retail Getting Chopped in Middle";
-                rboxMeterFill.style.width = "50%";
                 rboxMeterFill.style.background = "linear-gradient(90deg, #38bdf8, #fbbf24)";
 
                 rboxRegimeBadge.textContent = "📦 EQUILIBRIUM NO-MANS-LAND";
@@ -4650,8 +4651,8 @@ function syncMasterUnifiedCockpit(gold, isBear) {
             let insightText = "";
 
             if (isTradeStopped) {
-                sentimentPct = 15;
-                sentimentTagText = "EXTREME PANIC (15%)";
+                sentimentPct = 10;
+                sentimentTagText = "CAPITULATION (STOPPED)";
                 sentimentDesc = "🛑 Retail Capitulation / Stop Run";
                 meterBg = "linear-gradient(90deg, #ef4444, #f87171)";
                 regimeText = "⚡ SMART MONEY STOP HARVEST";
@@ -4664,8 +4665,8 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 trapValColor = "#93c5fd";
                 insightText = "Market ne stop loss trigger kiya. Retailers yahan revenge trade karke mazeed phasenge — hum sakhti se discipline maintain kar k agli pipeline trade par move karenge!";
             } else if (isTradeDone) {
-                sentimentPct = 88;
-                sentimentTagText = "EUPHORIA (88%)";
+                sentimentPct = 100;
+                sentimentTagText = "TARGET SECURED (DONE)";
                 sentimentDesc = "👑 Target Smashed / Smart Money Exit";
                 meterBg = "linear-gradient(90deg, #10b981, #00f59b)";
                 regimeText = "📦 FULL INSTITUTIONAL DELIVERY";
@@ -4678,8 +4679,8 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 trapValColor = "#6ee7b7";
                 insightText = "Smart Money ne retail ko trap karke pura run execute kar liya aur munafa book kar liya. Aam log ab chart dekh kar daud rahe hain jabki hamari trade successfully close hai!";
             } else if (isTradeMissed) {
-                sentimentPct = 60;
-                sentimentTagText = "RUNAWAY MOMENTUM (60%)";
+                sentimentPct = 50;
+                sentimentTagText = "ORDER UNFILLED (MISSED)";
                 sentimentDesc = "⚡ Whales Front-ran Retail Orders";
                 meterBg = "linear-gradient(90deg, #f59e0b, #fbbf24)";
                 regimeText = "🚀 AGGRESSIVE LIQUIDITY DISPLACEMENT";
@@ -4692,19 +4693,15 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                 trapValColor = "#fde68a";
                 insightText = "Market ne entry fill kiye baghair tezi pakri. Retailers aisi soorat mein bhaagti market ko chase karte hain aur top/bottom par phans jate hain. Hum patient rehte hain.";
             } else if (isTradeBear) {
-                // Bearish Setup: Dynamic Real-time Market Psychology Interpolation
+                // Bearish Setup: Dynamic Target Delivery Progress
                 const span = Math.max(2, entryPrice - tp1Price);
                 const drop = entryPrice - cp; // Positive when dropping towards TP
-                const progressRatio = drop / span;
-                
-                // When price is at entry ($4,364.50) or above -> Breakout buyers are trapped in high greed (75% to 88%)
-                // As price flushes down towards TP1 ($4,352.00) -> Panic selling kicks in, dropping towards 15% - 25%
-                const calculatedPct = Math.round(78 - (progressRatio * 56));
-                sentimentPct = Math.max(12, Math.min(92, calculatedPct));
+                const progressPct = Math.max(0, Math.min(100, Math.round((drop / span) * 100)));
+                sentimentPct = progressPct;
 
-                if (sentimentPct >= 65) {
-                    sentimentTagText = `FOMO GREED (${sentimentPct}%)`;
-                    sentimentDesc = "🔥 Retail Breakout Buyers Trapped";
+                if (drop <= 0) {
+                    sentimentTagText = `AT ENTRY ZONE (${progressPct}% to TP1)`;
+                    sentimentDesc = "🔥 Sell In-Play at Supply Zone";
                     meterBg = "linear-gradient(90deg, #ef4444, #f87171)";
                     regimeText = "🏛️ SMART MONEY DISTRIBUTION";
                     regimeBg = "rgba(239,68,68,0.2)";
@@ -4712,11 +4709,11 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     regimeBorder = "rgba(239,68,68,0.4)";
                     trapStatusText = "⚠️ ACTIVE BULL TRAP";
                     trapStatusColor = "#ef4444";
-                    trapValText = `Breakout Buyers Phans Gaye ($${entryPrice.toFixed(2)} Resistance)`;
+                    trapValText = `Breakout Buyers Trapped ($${entryPrice.toFixed(2)} Resistance)`;
                     trapValColor = "#fca5a5";
                     insightText = `Retailers green candles dekh kar resistance breakout par buy kar rahe hain. Institutions yahan unke buy orders par massive sell liquidity offload kar rahe hain — humein Sell Retest lena hai!`;
-                } else if (sentimentPct >= 38) {
-                    sentimentTagText = `BEARISH MOMENTUM (${sentimentPct}%)`;
+                } else if (progressPct < 70) {
+                    sentimentTagText = `EXPANDING TO TP1 (${progressPct}% Delivered)`;
                     sentimentDesc = "⚡ Smart Money Downside Expansion";
                     meterBg = "linear-gradient(90deg, #f59e0b, #38bdf8)";
                     regimeText = "⚡ LIQUIDITY DELIVERY (SSL HUNT)";
@@ -4729,31 +4726,29 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     trapValColor = "#bae6fd";
                     insightText = `Smart money selling pressure barh chuki hai. Market target ki taraf continuous expansion kar rahi hai.`;
                 } else {
-                    sentimentTagText = `RETAIL PANIC (${sentimentPct}%)`;
-                    sentimentDesc = "🔻 Late Retail Chasers Selling Low";
-                    meterBg = "linear-gradient(90deg, #38bdf8, #818cf8)";
+                    sentimentTagText = `NEAR TARGET TP1 (${progressPct}% Delivered)`;
+                    sentimentDesc = "🔻 Target Level Approaching";
+                    meterBg = "linear-gradient(90deg, #38bdf8, #10b981)";
                     regimeText = "⚡ DOWNSIDE DISPLACEMENT";
                     regimeBg = "rgba(56,189,248,0.2)";
                     regimeColor = "#bae6fd";
                     regimeBorder = "rgba(56,189,248,0.4)";
-                    trapStatusText = "🎣 LATE SELLER TRAP";
+                    trapStatusText = "🎣 RUNNER SECURED";
                     trapStatusColor = "#38bdf8";
                     trapValText = `Chasers Selling Into TP1 ($${tp1Price.toFixed(2)})`;
                     trapValColor = "#bae6fd";
                     insightText = `Market gir chuki hai, ab aam traders darr k maare neechay sell kar rahe hain jabki Smart Money apne TP levels ($${tp1Price.toFixed(2)}) par munafa book karne ki tayari mein hai.`;
                 }
             } else {
-                // Bullish Setup: Dynamic Real-time Market Psychology Interpolation
+                // Bullish Setup: Dynamic Target Delivery Progress
                 const span = Math.max(2, tp1Price - entryPrice);
-                const gain = cp - entryPrice;
-                const progressRatio = gain / span;
-                
-                const calculatedPct = Math.round(22 + (progressRatio * 58));
-                sentimentPct = Math.max(12, Math.min(92, calculatedPct));
+                const gain = cp - entryPrice; // Positive when rising towards TP
+                const progressPct = Math.max(0, Math.min(100, Math.round((gain / span) * 100)));
+                sentimentPct = progressPct;
 
-                if (sentimentPct <= 35) {
-                    sentimentTagText = `EXTREME FEAR (${sentimentPct}%)`;
-                    sentimentDesc = "😨 Retail Panic Selling at Bottom";
+                if (gain <= 0) {
+                    sentimentTagText = `AT ENTRY ZONE (${progressPct}% to TP1)`;
+                    sentimentDesc = "😨 Buy In-Play at Demand Zone";
                     meterBg = "linear-gradient(90deg, #38bdf8, #818cf8)";
                     regimeText = "🏛️ SMART MONEY ACCUMULATION";
                     regimeBg = "rgba(0,245,155,0.2)";
@@ -4761,11 +4756,11 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     regimeBorder = "rgba(0,245,155,0.4)";
                     trapStatusText = "⚠️ ACTIVE BEAR TRAP";
                     trapStatusColor = "#ef4444";
-                    trapValText = `Breakdown Sellers Phans Gaye ($${entryPrice.toFixed(2)} Support)`;
+                    trapValText = `Breakdown Sellers Trapped ($${entryPrice.toFixed(2)} Support)`;
                     trapValColor = "#fca5a5";
                     insightText = `Retailers red dump candles dekh kar support todne par sell kar rahe hain. Smart Money unka Stop Loss kha k discount price par buy orders absorb kar raha hai — Retail k ulta Buy karein!`;
-                } else if (sentimentPct <= 62) {
-                    sentimentTagText = `BULLISH RECOVERY (${sentimentPct}%)`;
+                } else if (progressPct < 70) {
+                    sentimentTagText = `EXPANDING TO TP1 (${progressPct}% Delivered)`;
                     sentimentDesc = "⚡ Smart Money Upside Push";
                     meterBg = "linear-gradient(90deg, #38bdf8, #10b981)";
                     regimeText = "⚡ DEMAND EXPANSION";
@@ -4778,14 +4773,14 @@ function syncMasterUnifiedCockpit(gold, isBear) {
                     trapValColor = "#6ee7b7";
                     insightText = `Demand zone se strong buying volume enter ho chuka hai. Price smooth targets ki taraf ja rahi hai.`;
                 } else {
-                    sentimentTagText = `GREED MOMENTUM (${sentimentPct}%)`;
-                    sentimentDesc = "🚀 Retail FOMO Chasing the Rally";
+                    sentimentTagText = `NEAR TARGET TP1 (${progressPct}% Delivered)`;
+                    sentimentDesc = "🚀 Target Level Approaching";
                     meterBg = "linear-gradient(90deg, #10b981, #00f59b)";
                     regimeText = "⚡ UPSIDE DISPLACEMENT";
                     regimeBg = "rgba(16,185,129,0.2)";
                     regimeColor = "#6ee7b7";
                     regimeBorder = "rgba(16,185,129,0.4)";
-                    trapStatusText = "🎣 TOP BUYER TRAP";
+                    trapStatusText = "🎣 RUNNER SECURED";
                     trapStatusColor = "#00f59b";
                     trapValText = `Late Buyers Buying Near TP1 ($${tp1Price.toFixed(2)})`;
                     trapValColor = "#6ee7b7";
@@ -9509,363 +9504,9 @@ function setupJournalListeners() {
 }
 
 // =========================================================
-// MODULE 10: AI PREDICTOR ACCURACY & SIGNAL VERIFICATION
+// MODULE 10: DEPRECATED LEGACY AI AUDIT SIGNALS
+// (Superseded by Module 09 Unified Verified 43-Trade Performance Journal)
 // =========================================================
-const AI_AUDIT_STORAGE_KEY = "trading_terminal_ai_audit_v2";
-let currentAuditFilter = "all";
-
-const DEFAULT_AI_AUDIT_SIGNALS = [
-    {
-        id: "series_t1",
-        title: "Trade 1/10: Gold (XAU/USD) 15M Counter-Trend Sell",
-        category: "gold",
-        date: "Trade 1 of 10",
-        type: "SELL",
-        entry: "$4,412.00",
-        sl: "$4,417.00 ($5.00 Risk)",
-        tp: "$4,397.00 (1:3 Target)",
-        status: "STOPPED",
-        pips: -50,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "Bullish macro trend momentum swept FVG",
-        outcome: "Disciplined Stop Loss respected. Loss contained to exact -1R (-$5.00)."
-    },
-    {
-        id: "series_t2",
-        title: "Trade 2/10: Gold (XAU/USD) Friday NFP High Sweep",
-        category: "gold",
-        date: "Trade 2 of 10",
-        type: "SELL",
-        entry: "$4,480.00 (BSL Sweep)",
-        sl: "$4,485.00 ($5.00 Risk)",
-        tp: "$4,400.00 (1:4 Target)",
-        status: "HIT",
-        pips: 800,
-        rMultiple: 4.0,
-        pnlUsd: 20.00,
-        catalyst: "DXY 99.16 Reaction + Bond Yield Rejection + Liquidity Sweep",
-        outcome: "Full 1:4 Target Hit! +$20.00 profit (+4R). Covers previous loss with +3R net gain!"
-    },
-    {
-        id: "series_t3",
-        title: "Trade 3/10: EUR/USD London Open Short Retest",
-        category: "forex",
-        date: "Trade 3 of 10",
-        type: "SELL",
-        entry: "1.0880",
-        sl: "1.0905 (25 Pips • $5.00)",
-        tp: "1.0805 (1:3 Target)",
-        status: "STOPPED",
-        pips: -25,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "ECB speaker commentary caused temporary bounce",
-        outcome: "Disciplined SL hit. Capital protected strictly (-$5.00)."
-    },
-    {
-        id: "series_t4",
-        title: "Trade 4/10: Gold (XAU/USD) Asian Judas Sweep",
-        category: "gold",
-        date: "Trade 4 of 10",
-        type: "SELL",
-        entry: "$4,448.50 (Asia High Sweep)",
-        sl: "$4,453.50 ($5.00 Risk)",
-        tp: "$4,433.50 (1:3 Target)",
-        status: "HIT",
-        pips: 150,
-        rMultiple: 3.0,
-        pnlUsd: 15.00,
-        catalyst: "London open Judas swing into 15M Bearish OB + 78% rejection wick",
-        outcome: "Clean 1:3 R:R delivered. +$15.00 profit (+3R)."
-    },
-    {
-        id: "series_t5",
-        title: "Trade 5/10: GBP/USD London Breakdown Pullback",
-        category: "forex",
-        date: "Trade 5 of 10",
-        type: "SELL",
-        entry: "1.2940",
-        sl: "1.2965 (25 Pips • $5.00)",
-        tp: "1.2865 (1:3 Target)",
-        status: "STOPPED",
-        pips: -25,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "UK economic news beat estimates, reversing pullback",
-        outcome: "Loss contained to -$5.00. Zero emotional revenge trading."
-    },
-    {
-        id: "series_t6",
-        title: "Trade 6/10: Gold (XAU/USD) 1M Micro FVG Retest",
-        category: "gold",
-        date: "Trade 6 of 10",
-        type: "SELL",
-        entry: "$4,446.50 (1M FVG Tap)",
-        sl: "$4,451.50 ($5.00 Risk)",
-        tp: "$4,431.50 (1:3 Target)",
-        status: "HIT",
-        pips: 150,
-        rMultiple: 3.0,
-        pnlUsd: 15.00,
-        catalyst: "1H Macro OB ➔ 5M FVG ➔ 1M Pinpoint Tap",
-        outcome: "Clean institutional delivery straight to 1:3 Target. +$15.00 (+3R) locked."
-    },
-    {
-        id: "series_t7",
-        title: "Trade 7/10: USD/JPY Pullback Continuation",
-        category: "forex",
-        date: "Trade 7 of 10",
-        type: "BUY",
-        entry: "153.20",
-        sl: "152.80 (40 Pips • $5.00)",
-        tp: "154.40 (1:3 Target)",
-        status: "STOPPED",
-        pips: -40,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "Bank of Japan rate warning triggered flash retrace",
-        outcome: "SL triggered. Capital safe (-$5.00)."
-    },
-    {
-        id: "series_t8",
-        title: "Trade 8/10: Gold (XAU/USD) NY Overlap Retest",
-        category: "gold",
-        date: "Trade 8 of 10",
-        type: "SELL",
-        entry: "$4,438.00",
-        sl: "$4,443.00 ($5.00 Risk)",
-        tp: "$4,423.00 (1:3 Target)",
-        status: "STOPPED",
-        pips: -50,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "Consolidation chop before session close",
-        outcome: "Disciplined $5.00 risk respected."
-    },
-    {
-        id: "series_t9",
-        title: "Trade 9/10: Gold (XAU/USD) Discount Demand Tap",
-        category: "gold",
-        date: "Trade 9 of 10",
-        type: "BUY",
-        entry: "$4,418.00 (Discount 15M FVG)",
-        sl: "$4,413.00 ($5.00 Risk)",
-        tp: "$4,433.00 (1:3 Target)",
-        status: "HIT",
-        pips: 150,
-        rMultiple: 3.0,
-        pnlUsd: 15.00,
-        catalyst: "4H Demand block + DXY rejection at resistance",
-        outcome: "Strong impulsive surge to 1:3 Target. +$15.00 (+3R) banked."
-    },
-    {
-        id: "series_t10",
-        title: "Trade 10/10: Gold (XAU/USD) Late Session Scalp",
-        category: "gold",
-        date: "Trade 10 of 10",
-        type: "SELL",
-        entry: "$4,432.00",
-        sl: "$4,437.00 ($5.00 Risk)",
-        tp: "$4,417.00 (1:3 Target)",
-        status: "STOPPED",
-        pips: -50,
-        rMultiple: -1.0,
-        pnlUsd: -5.00,
-        catalyst: "Weekend profit-taking volatility",
-        outcome: "Series completed. Final loss contained to -$5.00."
-    }
-];
-
-function getAiAuditSignals() {
-    try {
-        const stored = localStorage.getItem(AI_AUDIT_STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length === 10 && parsed[0]?.id?.startsWith("series_")) return parsed;
-        }
-    } catch(e) {
-        console.warn("Error reading AI audit signals:", e);
-    }
-    return [...DEFAULT_AI_AUDIT_SIGNALS];
-}
-
-function saveAiAuditSignals(signals) {
-    try {
-        localStorage.setItem(AI_AUDIT_STORAGE_KEY, JSON.stringify(signals));
-    } catch(e) {
-        console.error("Error saving AI audit signals:", e);
-    }
-}
-
-function renderAiAuditUI() {
-    const signals = getAiAuditSignals();
-    const statWinRate = document.getElementById("aiStatWinRate");
-    const statPips = document.getElementById("aiStatPips");
-    const statTotalSignals = document.getElementById("aiStatTotalSignals");
-    const statAvgRr = document.getElementById("aiStatAvgRr");
-    const gridEl = document.getElementById("aiAuditGrid");
-
-    let totalCalls = signals.length;
-    let hitCount = 0;
-    let stoppedCount = 0;
-    let totalPnlUsd = 0;
-    let totalR = 0;
-
-    signals.forEach(s => {
-        if (s.status === "HIT") {
-            hitCount++;
-            totalPnlUsd += (s.pnlUsd || 15.0);
-            totalR += (s.rMultiple || 3.0);
-        } else if (s.status === "STOPPED") {
-            stoppedCount++;
-            totalPnlUsd += (s.pnlUsd || -5.0);
-            totalR += (s.rMultiple || -1.0);
-        }
-    });
-
-    const completedCalls = hitCount + stoppedCount;
-    const winRate = completedCalls > 0 ? ((hitCount / completedCalls) * 100).toFixed(1) : "40.0";
-    const pnlSign = totalPnlUsd >= 0 ? "+" : "";
-
-    if (statWinRate) {
-        statWinRate.textContent = `${winRate}% (${hitCount}W • ${stoppedCount}L)`;
-        statWinRate.className = "asr-val green";
-    }
-    if (statPips) {
-        statPips.textContent = `${pnlSign}$${totalPnlUsd.toFixed(2)} (+${totalR.toFixed(1)}R)`;
-        statPips.className = totalPnlUsd >= 0 ? "asr-val green" : "asr-val red";
-    }
-    if (statTotalSignals) {
-        statTotalSignals.textContent = `Series #1: ${completedCalls} / 10 Completed`;
-    }
-    if (statAvgRr) {
-        statAvgRr.textContent = `1 : 3.4 Realized`;
-    }
-    if (statMacroRate) {
-        statMacroRate.textContent = `94.0%`;
-    }
-
-    // Dynamic Active Signal Monitor Card Sync
-    const asmSub = document.querySelector(".asm-sub");
-    const asmStatusPill = document.querySelector(".asm-status-pill");
-    const cp = ASSETS["XAUUSD"] ? ASSETS["XAUUSD"].currentPrice : 4406.70;
-    const runningPips = Math.round(Math.abs(4446.50 - cp) * 10);
-    if (asmSub) {
-        asmSub.innerHTML = `1M Micro Pinpoint: $4,446.50 • Sniper SL: $4,448.80 (23 Pips • -$4.60 Risk) • Live Spot: $${cp.toFixed(2)} • Confluence: DXY (${ASSETS["DXY"].currentPrice.toFixed(2)}) + 10Y Yields (${ASSETS["US10Y"].currentPrice.toFixed(2)}%)`;
-    }
-    if (asmStatusPill) {
-        if (cp <= 4423.50) {
-            asmStatusPill.innerHTML = `👑 TP1, TP2 & TP3 SMASHED (+${runningPips} Pips Running)`;
-            asmStatusPill.style.background = "rgba(0, 245, 155, 0.2)";
-            asmStatusPill.style.color = "var(--color-green)";
-            asmStatusPill.style.border = "1px solid var(--color-green)";
-        } else {
-            asmStatusPill.innerHTML = `⏳ ACTIVE / IN-PLAY (+${runningPips} Pips)`;
-        }
-    }
-
-    if (!gridEl) return;
-
-    const filtered = signals.filter(s => {
-        if (currentAuditFilter === "all") return true;
-        if (currentAuditFilter === "gold") return s.category === "gold";
-        if (currentAuditFilter === "forex") return s.category === "forex";
-        if (currentAuditFilter === "active") return s.status === "ACTIVE";
-        return true;
-    });
-
-    gridEl.innerHTML = filtered.map(s => {
-        let cardClass = "audit-card";
-        let badgeClass = "ac-badge";
-        let badgeText = "";
-        if (s.status === "HIT") {
-            cardClass += " hit";
-            badgeClass += " hit";
-            badgeText = `✅ HIT TP (+${s.pips} Pips)`;
-        } else if (s.status === "STOPPED") {
-            cardClass += " stopped";
-            badgeClass += " stopped";
-            badgeText = `🛑 STOPPED (${s.pips} Pips)`;
-        } else {
-            cardClass += " active-card";
-            badgeClass += " active-badge";
-            badgeText = `⏳ ACTIVE / IN-PLAY`;
-        }
-
-        return `
-            <div class="${cardClass}" data-id="${s.id}">
-                <div class="ac-header">
-                    <div>
-                        <div class="ac-title">${s.title}</div>
-                        <div class="ac-date">📅 ${s.date} • Direction: <strong style="color:${s.type === 'BUY' ? 'var(--color-green)' : 'var(--color-red)'}">${s.type}</strong></div>
-                    </div>
-                    <span class="${badgeClass}">${badgeText}</span>
-                </div>
-                <div class="ac-levels">
-                    <div class="ac-level-item"><span>Entry Zone:</span> <strong>${s.entry}</strong></div>
-                    <div class="ac-level-item"><span>Sniper SL:</span> <strong style="color:var(--color-red)">${s.sl}</strong></div>
-                    <div class="ac-level-item"><span>Target TP:</span> <strong style="color:var(--color-green)">${s.tp}</strong></div>
-                    <div class="ac-level-item"><span>Macro Link:</span> <strong>${s.catalyst ? s.catalyst.slice(0, 22) + "..." : "Aligned"}</strong></div>
-                </div>
-                <div class="ac-outcome">
-                    <strong>Proof / Outcome:</strong> ${s.outcome}
-                </div>
-                <div class="ac-actions">
-                    <button class="btn-ac-action" onclick="toggleSignalAuditStatus('${s.id}')" title="Cycle Status: Active ➔ Hit TP ➔ Stopped Out">🔄 Toggle Result</button>
-                </div>
-            </div>
-        `;
-    }).join("");
-}
-
-function filterAuditCards(category) {
-    currentAuditFilter = category;
-    document.querySelectorAll(".btn-audit-filter").forEach(btn => btn.classList.remove("active"));
-    if (category === "all") document.getElementById("btnFilterAuditAll")?.classList.add("active");
-    if (category === "gold") document.getElementById("btnFilterAuditGold")?.classList.add("active");
-    if (category === "forex") document.getElementById("btnFilterAuditForex")?.classList.add("active");
-    if (category === "active") document.getElementById("btnFilterAuditActive")?.classList.add("active");
-    renderAiAuditUI();
-}
-window.filterAuditCards = filterAuditCards;
-
-function toggleSignalAuditStatus(signalId) {
-    const signals = getAiAuditSignals();
-    const sig = signals.find(s => s.id === signalId);
-    if (!sig) return;
-
-    if (sig.status === "ACTIVE") {
-        sig.status = "HIT";
-        sig.pips = 450;
-        sig.outcome = "User Verified: Market delivered the target successfully!";
-    } else if (sig.status === "HIT") {
-        sig.status = "STOPPED";
-        sig.pips = -25;
-        sig.outcome = "User Verified: Market reached the stop loss.";
-    } else {
-        sig.status = "ACTIVE";
-        sig.pips = 0;
-        sig.outcome = "Re-opened for live forward testing.";
-    }
-    saveAiAuditSignals(signals);
-    renderAiAuditUI();
-}
-window.toggleSignalAuditStatus = toggleSignalAuditStatus;
-
-function setupAiAuditListeners() {
-    const btnActive = document.getElementById("btnAuditActiveSignal");
-    if (btnActive) {
-        btnActive.addEventListener("click", () => {
-            toggleSignalAuditStatus("ai_sig_1");
-        });
-    }
-
-    document.getElementById("btnFilterAuditAll")?.addEventListener("click", () => filterAuditCards("all"));
-    document.getElementById("btnFilterAuditGold")?.addEventListener("click", () => filterAuditCards("gold"));
-    document.getElementById("btnFilterAuditForex")?.addEventListener("click", () => filterAuditCards("forex"));
-    document.getElementById("btnFilterAuditActive")?.addEventListener("click", () => filterAuditCards("active"));
-}
 
 // =========================================================
 // ASTRONOMICAL MOON PHASE & PLANETARY TIME HARMONY ENGINE
