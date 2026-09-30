@@ -7439,3 +7439,156 @@ body {
     color: #000;
 }
 
+
+/* ==========================================================================
+   EXECUTIVE 1-SCREEN PRO DASHBOARD & TABBED WORKSPACE
+   ========================================================================== */
+.executive-hero-desk {
+    display: grid;
+    grid-template-columns: minmax(0, 1.62fr) minmax(380px, 1fr);
+    gap: 16px;
+    align-items: stretch;
+    margin-top: 4px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 1200px) {
+    .executive-hero-desk {
+        grid-template-columns: 1fr;
+    }
+}
+
+.executive-chart-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.executive-chart-panel .chart-suite-section {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.executive-chart-panel .chart-control-bar {
+    margin-bottom: 10px;
+}
+
+.executive-chart-panel .chart-container {
+    flex: 1;
+    min-height: 560px;
+    height: 560px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+
+.executive-cockpit-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.executive-cockpit-panel .master-action-cockpit {
+    margin-bottom: 0 !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cockpit-rates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.cockpit-rate-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.workspace-tabs-container {
+    margin-top: 6px;
+}
+
+.workspace-tabs-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.workspace-tab-btn {
+    flex: 1;
+    min-width: 170px;
+    padding: 12px 18px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.workspace-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.workspace-tab-btn.active {
+    background: rgba(0, 210, 255, 0.15);
+    border-color: rgba(0, 210, 255, 0.5);
+    color: #38bdf8;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+}
+
+.workspace-tab-panel {
+    display: none;
+    animation: fadeInPanel 0.25s ease-out;
+}
+
+.workspace-tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeInPanel {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#legacySupportContainer {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
