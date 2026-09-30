@@ -2370,7 +2370,9 @@ function switchWorkspaceTab(tabId) {
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
     });
     document.querySelectorAll('.workspace-tab-panel').forEach(panel => {
-        panel.classList.toggle('active', panel.id === tabId);
+        const isActive = (panel.id === tabId);
+        panel.classList.toggle('active', isActive);
+        panel.style.display = isActive ? 'block' : 'none';
     });
     if (tabId === 'tab-journal' && typeof renderUnifiedPerformanceJournal === 'function') {
         renderUnifiedPerformanceJournal();
